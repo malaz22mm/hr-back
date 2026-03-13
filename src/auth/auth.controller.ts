@@ -7,7 +7,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { JwtPayload } from './types/jwtPayload.type';
 import { jwtPayloadWithRt } from './types/jwtPayloadWithRt.type';
 import { VerifingDto } from './dto/verification.dto';
-import { AtAuthorizationHeader } from 'src/common/decorators/at-authorization.decorator';
+import { AtAuthorizationHeader } from '../common/decorators/at-authorization.decorator';
 import { UserIdDto } from './dto/resend-verification-code.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MyPublic } from '../common/decorators/public.decorator';
