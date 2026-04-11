@@ -81,6 +81,20 @@ model Employees {
   // promotionStagnationRatio Float
 
   // user                     Users              @relation(fields: [id], references: [id])
+  vacationRequests VacationRequest[]
+}
+
+model VacationRequest {
+  id         Int       @id @default(autoincrement())
+  empId      String    @map("emp_id")
+  employee   Employees @relation(fields: [empId], references: [id], onDelete: Cascade)
+  startDate  DateTime  @db.Date
+  endDate    DateTime  @db.Date
+  reason     String
+  apprStatus Boolean
+
+  @@index([empId])
+  @@map("Vacation_Request")
 }
 
 enum UserRole {
