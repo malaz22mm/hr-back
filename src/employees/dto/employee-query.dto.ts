@@ -1,21 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Min, Max, IsNumber } from 'class-validator';
-
-// Import from your generated client to match DB types exactly
-import {
-  AttritionType,
-  BusinessTravelType,
-  DepartmentType,
-  EducationFieldType,
-  EducationLevel,
-  JobRoleType,
-  OvertimeType,
-  PerformanceRating,
-  SatisfactionRating,
-  MaritalStatusType,
-  AttritionRiskClass,
-} from 'generated/prisma/client';
+import { IsEnum, IsInt, IsOptional, IsString, Min, Max, IsNumber, IsBoolean } from 'class-validator';
 
 export enum SortOrder {
   ASC = 'asc',
@@ -41,7 +26,7 @@ export class EmployeeQueryDto {
   @Max(100)
   take?: number = 10;
 
-  @ApiPropertyOptional({ description: 'Field to sort by', example: 'monthlyIncome' })
+  @ApiPropertyOptional({ description: 'Field to sort by', example: 'monthly_income' })
   @IsOptional()
   @IsString()
   sortBy?: string;
@@ -52,92 +37,108 @@ export class EmployeeQueryDto {
   sortOrder?: SortOrder = SortOrder.ASC;
 
   // ===========================================================================
-  // Categorical Filters (Enums)
+  // Categorical Filters (IDs to Lookup Tables)
   // ===========================================================================
 
-  @ApiPropertyOptional({ enum: AttritionType })
+  @ApiPropertyOptional({ description: 'Attrition status' })
   @IsOptional()
-  @IsEnum(AttritionType)
-  attrition?: AttritionType;
+  @Type(() => Boolean)
+  @IsBoolean()
+  attrition?: boolean;
 
-  @ApiPropertyOptional({ enum: BusinessTravelType })
+  @ApiPropertyOptional({ description: 'Business Travel Lookup ID' })
   @IsOptional()
-  @IsEnum(BusinessTravelType)
-  businessTravel?: BusinessTravelType;
+  @Type(() => Number)
+  @IsInt()
+  businessTravelId?: number;
 
-  @ApiPropertyOptional({ enum: DepartmentType })
+  @ApiPropertyOptional({ description: 'Department Lookup ID' })
   @IsOptional()
-  @IsEnum(DepartmentType)
-  department?: DepartmentType;
+  @Type(() => Number)
+  @IsInt()
+  departmentId?: number;
 
-  @ApiPropertyOptional({ enum: EducationLevel })
+  @ApiPropertyOptional({ description: 'Education Level Lookup ID' })
   @IsOptional()
-  @IsEnum(EducationLevel)
-  education?: EducationLevel;
+  @Type(() => Number)
+  @IsInt()
+  educationId?: number;
 
-  @ApiPropertyOptional({ enum: EducationFieldType })
+  @ApiPropertyOptional({ description: 'Job Role Lookup ID' })
   @IsOptional()
-  @IsEnum(EducationFieldType)
-  educationField?: EducationFieldType;
+  @Type(() => Number)
+  @IsInt()
+  jobRoleId?: number;
 
-  @ApiPropertyOptional({ enum: JobRoleType })
+  @ApiPropertyOptional({ description: 'Marital Status Lookup ID' })
   @IsOptional()
-  @IsEnum(JobRoleType)
-  jobRole?: JobRoleType;
+  @Type(() => Number)
+  @IsInt()
+  maritalStatusId?: number;
 
-  @ApiPropertyOptional({ enum: MaritalStatusType })
+  @ApiPropertyOptional({ description: 'Attrition Risk Class Lookup ID' })
   @IsOptional()
-  @IsEnum(MaritalStatusType)
-  maritalStatus?: MaritalStatusType;
+  @Type(() => Number)
+  @IsInt()
+  attritionRiskClassId?: number;
 
-  @ApiPropertyOptional({ enum: OvertimeType })
+  @ApiPropertyOptional({ description: 'Work Shift Lookup ID' })
   @IsOptional()
-  @IsEnum(OvertimeType)
-  overTime?: OvertimeType;
+  @Type(() => Number)
+  @IsInt()
+  workShiftId?: number;
 
-  @ApiPropertyOptional({ enum: AttritionRiskClass })
+  @ApiPropertyOptional({ description: 'Overtime status' })
   @IsOptional()
-  @IsEnum(AttritionRiskClass)
-  attritionRiskClass?: AttritionRiskClass;
+  @Type(() => Boolean)
+  @IsBoolean()
+  overTime?: boolean;
 
-  @ApiPropertyOptional({ description: 'Gender' })
+  @ApiPropertyOptional({ description: 'Gender (true for men)' })
   @IsOptional()
-  @IsString()
-  gender?: string;
+  @Type(() => Boolean)
+  @IsBoolean()
+  gender?: boolean;
 
   // ===========================================================================
-  // Rating Filters
+  // Rating Filters (All point to Satisfaction Lookup Table)
   // ===========================================================================
 
-  @ApiPropertyOptional({ enum: SatisfactionRating })
+  @ApiPropertyOptional({ description: 'Environment Satisfaction ID' })
   @IsOptional()
-  @IsEnum(SatisfactionRating)
-  environmentSatisfaction?: SatisfactionRating;
+  @Type(() => Number)
+  @IsInt()
+  environmentSatisfactionId?: number;
 
-  @ApiPropertyOptional({ enum: SatisfactionRating })
+  @ApiPropertyOptional({ description: 'Job Involvement ID' })
   @IsOptional()
-  @IsEnum(SatisfactionRating)
-  jobInvolvement?: SatisfactionRating;
+  @Type(() => Number)
+  @IsInt()
+  jobInvolvementId?: number;
 
-  @ApiPropertyOptional({ enum: SatisfactionRating })
+  @ApiPropertyOptional({ description: 'Job Satisfaction ID' })
   @IsOptional()
-  @IsEnum(SatisfactionRating)
-  jobSatisfaction?: SatisfactionRating;
+  @Type(() => Number)
+  @IsInt()
+  jobSatisfactionId?: number;
 
-  @ApiPropertyOptional({ enum: PerformanceRating })
+  @ApiPropertyOptional({ description: 'Performance Rating ID' })
   @IsOptional()
-  @IsEnum(PerformanceRating)
-  performanceRating?: PerformanceRating;
+  @Type(() => Number)
+  @IsInt()
+  performanceRatingId?: number;
 
-  @ApiPropertyOptional({ enum: SatisfactionRating })
+  @ApiPropertyOptional({ description: 'Relationship Satisfaction ID' })
   @IsOptional()
-  @IsEnum(SatisfactionRating)
-  relationshipSatisfaction?: SatisfactionRating;
+  @Type(() => Number)
+  @IsInt()
+  relationshipSatisfactionId?: number;
 
-  @ApiPropertyOptional({ enum: SatisfactionRating })
+  @ApiPropertyOptional({ description: 'Work Life Balance ID' })
   @IsOptional()
-  @IsEnum(SatisfactionRating)
-  workLifeBalance?: SatisfactionRating;
+  @Type(() => Number)
+  @IsInt()
+  workLifeBalanceId?: number;
 
   // ===========================================================================
   // Numeric Ranges (Min / Max)
@@ -358,4 +359,12 @@ export class EmployeeQueryDto {
   @ApiPropertyOptional({ description: 'Maximum Role Stability Ratio (Float)' })
   @IsOptional() @Type(() => Number) @IsNumber()
   maxRoleStabilityRatio?: number;
+  
+  @ApiPropertyOptional({ description: 'Maximum Promotion Stagnation Ratio (Float)' })
+  @IsOptional() @Type(() => Number) @IsNumber()
+  minPromotionStagnationRatio?: number;
+  
+  @ApiPropertyOptional({ description: 'Maximum Promotion Stagnation Ratio (Float)' })
+  @IsOptional() @Type(() => Number) @IsNumber()
+  maxPromotionStagnationRatio?: number;
 }

@@ -1,13 +1,18 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, PartialType } from "@nestjs/swagger";
 import { BaseEmployeeDto } from "./base.employee.dto";
-import { IsNotEmpty,  IsUUID } from "class-validator";
+import { IsInt, IsNotEmpty } from "class-validator";
 
-export class UpdateEmployeeDto extends BaseEmployeeDto {
+/**
+ * UpdateEmployeeDto
+ * Inherits all fields from BaseEmployeeDto but makes them optional 
+ * for PATCH requests, while requiring a valid Integer ID.
+ */
+export class UpdateEmployeeDto extends PartialType(BaseEmployeeDto) {
     @ApiProperty({
-        example: '1326f07e-d592-4d83-8d6a-bfef0ab01bdd',
-        description: "employee's id",
+        example: 1,
+        description: "The unique integer ID of the employee",
     })
-    @IsUUID()
+    @IsInt()
     @IsNotEmpty()
-    id: string;
+    id: number;
 }

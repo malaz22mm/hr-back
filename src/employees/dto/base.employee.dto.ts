@@ -1,224 +1,222 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsEnum,
+  IsBoolean,
   IsInt,
   IsNotEmpty,
   IsNumber,
   IsString,
 } from 'class-validator';
 
-import {
-  AttritionType,
-  MaritalStatusType,
-  JobRoleType,
-  BusinessTravelType,
-  DepartmentType,
-  EducationLevel,
-  EducationFieldType,
-  SatisfactionRating,
-  PerformanceRating,
-  OvertimeType,
-  AttritionRiskClass,
-} from 'generated/prisma/enums';
-
 export class BaseEmployeeDto {
-  @ApiProperty({ enum: AttritionType, example: AttritionType.YES })
-  @IsEnum(AttritionType)
+  @ApiProperty({ example: 'John Doe' })
+  @IsString()
   @IsNotEmpty()
-  attrition: AttritionType;
+  name: string;
+
+  @ApiProperty({ example: 'john_doe' })
+  @IsString()
+  @IsNotEmpty()
+  name_code: string;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  @IsNotEmpty()
+  attrition: boolean;
 
   @ApiProperty({ example: 35 })
   @IsInt()
   @IsNotEmpty()
   age: number;
 
-  @ApiProperty({ example: 'Male' })
-  @IsString()
+  @ApiProperty({ example: true, description: 'true for men' })
+  @IsBoolean()
   @IsNotEmpty()
-  gender: string;
-
-  @ApiProperty({ enum: MaritalStatusType })
-  @IsEnum(MaritalStatusType)
-  @IsNotEmpty()
-  maritalStatus: MaritalStatusType;
+  gender: boolean;
 
   @ApiProperty({ example: 12 })
   @IsInt()
   @IsNotEmpty()
-  distanceFromHome: number;
+  distance_from_home: number;
+
+  @ApiProperty({ example: 60 })
+  @IsInt()
+  @IsNotEmpty()
+  hourly_rate: number;
+
+  @ApiProperty({ example: 480 })
+  @IsInt()
+  @IsNotEmpty()
+  daily_rate: number;
+
+  @ApiProperty({ example: 12000 })
+  @IsInt()
+  @IsNotEmpty()
+  monthly_rate: number;
 
   @ApiProperty({ example: 4500 })
   @IsInt()
   @IsNotEmpty()
-  monthlyIncome: number;
+  monthly_income: number;
 
   @ApiProperty({ example: 15 })
   @IsInt()
   @IsNotEmpty()
-  percentSalaryHike: number;
+  percent_salary_hike: number;
 
   @ApiProperty({ example: 3, description: 'Job level from 1 to 5' })
   @IsInt()
   @IsNotEmpty()
-  jobLevel: number;
-
-  @ApiProperty({ enum: JobRoleType })
-  @IsEnum(JobRoleType)
-  @IsNotEmpty()
-  jobRole: JobRoleType;
-
-  @ApiProperty({ enum: BusinessTravelType })
-  @IsEnum(BusinessTravelType)
-  @IsNotEmpty()
-  businessTravel: BusinessTravelType;
-
-  @ApiProperty({ enum: DepartmentType })
-  @IsEnum(DepartmentType)
-  @IsNotEmpty()
-  department: DepartmentType;
-
-  @ApiProperty({ enum: EducationLevel })
-  @IsEnum(EducationLevel)
-  @IsNotEmpty()
-  education: EducationLevel;
-
-  @ApiProperty({ enum: EducationFieldType })
-  @IsEnum(EducationFieldType)
-  @IsNotEmpty()
-  educationField: EducationFieldType;
+  job_level: number;
 
   @ApiProperty({ example: 2 })
   @IsInt()
   @IsNotEmpty()
-  numCompaniesWorked: number;
+  num_of_companies_worked: number;
 
   @ApiProperty({ example: 10 })
   @IsInt()
   @IsNotEmpty()
-  totalWorkingYears: number;
+  total_working_years: number;
 
   @ApiProperty({ example: 3 })
   @IsInt()
   @IsNotEmpty()
-  trainingTimesLastYear: number;
+  training_times_last_year: number;
 
   @ApiProperty({ example: 40 })
   @IsInt()
   @IsNotEmpty()
-  trainingHoursLastYear: number;
+  training_hours_last_year: number;
 
   @ApiProperty({ example: 20 })
   @IsInt()
   @IsNotEmpty()
-  trainingHoursLast6Months: number;
+  training_hours_last_6_months: number;
 
   @ApiProperty({ example: 75 })
   @IsInt()
   @IsNotEmpty()
-  trainingGapScore: number;
+  training_gap_score: number;
 
   @ApiProperty({ example: 5 })
   @IsInt()
   @IsNotEmpty()
-  yearsAtCompany: number;
+  years_at_company: number;
 
   @ApiProperty({ example: 3 })
   @IsInt()
   @IsNotEmpty()
-  yearsInCurrentRole: number;
+  years_in_current_role: number;
 
   @ApiProperty({ example: 2 })
   @IsInt()
   @IsNotEmpty()
-  yearsSinceLastPromotion: number;
+  years_since_last_promotion: number;
 
   @ApiProperty({ example: 4 })
   @IsInt()
   @IsNotEmpty()
-  yearsWithCurrManager: number;
-
-  @ApiProperty({ enum: SatisfactionRating })
-  @IsEnum(SatisfactionRating)
-  @IsNotEmpty()
-  environmentSatisfaction: SatisfactionRating;
-
-  @ApiProperty({ enum: SatisfactionRating })
-  @IsEnum(SatisfactionRating)
-  @IsNotEmpty()
-  jobInvolvement: SatisfactionRating;
-
-  @ApiProperty({ enum: SatisfactionRating })
-  @IsEnum(SatisfactionRating)
-  @IsNotEmpty()
-  jobSatisfaction: SatisfactionRating;
-
-  @ApiProperty({ enum: PerformanceRating })
-  @IsEnum(PerformanceRating)
-  @IsNotEmpty()
-  performanceRating: PerformanceRating;
-
-  @ApiProperty({ enum: SatisfactionRating })
-  @IsEnum(SatisfactionRating)
-  @IsNotEmpty()
-  relationshipSatisfaction: SatisfactionRating;
-
-  @ApiProperty({ enum: SatisfactionRating })
-  @IsEnum(SatisfactionRating)
-  @IsNotEmpty()
-  workLifeBalance: SatisfactionRating;
-
-  @ApiProperty({ enum: OvertimeType })
-  @IsEnum(OvertimeType)
-  @IsNotEmpty()
-  overTime: OvertimeType;
+  years_with_curr_manager: number;
 
   @ApiProperty({ example: 1 })
   @IsInt()
   @IsNotEmpty()
-  absenceDaysLastMonth: number;
+  stock_option_level: number;
 
-  @ApiProperty({ example: 3 })
-  @IsInt()
+  @ApiProperty({ example: false })
+  @IsBoolean()
   @IsNotEmpty()
-  absenceDaysLast3Months: number;
-
-  @ApiProperty({ example: 0.12 })
-  @IsNumber()
-  @IsNotEmpty()
-  absenceRatio: number;
-
-  @ApiProperty({ example: 2 })
-  @IsInt()
-  @IsNotEmpty()
-  lateArrivalsLastMonth: number;
-
-  @ApiProperty({ example: 8.5 })
-  @IsNumber()
-  @IsNotEmpty()
-  overtimeHoursLastMonth: number;
+  over_time: boolean;
 
   @ApiProperty({ example: 70 })
   @IsInt()
   @IsNotEmpty()
-  workloadPressureIndex: number;
+  workload_pressure_index: number;
 
   @ApiProperty({ example: 82 })
   @IsInt()
   @IsNotEmpty()
-  engagementScore: number;
+  engagement_score: number;
 
   @ApiProperty({ example: 88 })
   @IsInt()
   @IsNotEmpty()
-  managerFeedbackScore: number;
+  engagement_feedback_score: number;
+
+  @ApiProperty({ example: 0.15 })
+  @IsNumber()
+  @IsNotEmpty()
+  promotion_stagnation_ratio: number;
 
   @ApiProperty({ example: 0.85 })
   @IsNumber()
   @IsNotEmpty()
-  roleStabilityRatio: number;
+  role_stability_ratio: number;
 
-  @ApiProperty({ enum: AttritionRiskClass })
-  @IsEnum(AttritionRiskClass)
+  // Foreign Key IDs (Lookup Table references)
+  @ApiProperty({ example: 1, description: 'ID from MaritalStatus table' })
+  @IsInt()
   @IsNotEmpty()
-  attritionRiskClass: AttritionRiskClass;
+  marital_status_id: number;
+
+  @ApiProperty({ example: 1, description: 'ID from JobRoleType table' })
+  @IsInt()
+  @IsNotEmpty()
+  job_role_id: number;
+
+  @ApiProperty({ example: 1, description: 'ID from BusinessTravel table' })
+  @IsInt()
+  @IsNotEmpty()
+  business_travel_id: number;
+
+  @ApiProperty({ example: 1, description: 'ID from DepartmentType table' })
+  @IsInt()
+  @IsNotEmpty()
+  department_id: number;
+
+  @ApiProperty({ example: 1, description: 'ID from Education table' })
+  @IsInt()
+  @IsNotEmpty()
+  education_id: number;
+
+  @ApiProperty({ example: 1, description: 'ID from PerformanceRating table' })
+  @IsInt()
+  @IsNotEmpty()
+  performance_rating_id: number;
+
+  @ApiProperty({ example: 1, description: 'ID from AttritionRiskClass table' })
+  @IsInt()
+  @IsNotEmpty()
+  attrition_risk_class_id: number;
+
+  @ApiProperty({ example: 1, description: 'ID from WorkShift table' })
+  @IsInt()
+  @IsNotEmpty()
+  work_shift_id: number;
+
+  // Satisfaction IDs (All point to Satisfaction table)
+  @ApiProperty({ example: 3, description: 'Environment Satisfaction ID' })
+  @IsInt()
+  @IsNotEmpty()
+  environment_satisfaction_id: number;
+
+  @ApiProperty({ example: 3, description: 'Job Involvement ID' })
+  @IsInt()
+  @IsNotEmpty()
+  job_involvement_id: number;
+
+  @ApiProperty({ example: 3, description: 'Job Satisfaction ID' })
+  @IsInt()
+  @IsNotEmpty()
+  job_satisfaction_id: number;
+
+  @ApiProperty({ example: 3, description: 'Relationship Satisfaction ID' })
+  @IsInt()
+  @IsNotEmpty()
+  relationship_satisfaction_id: number;
+
+  @ApiProperty({ example: 3, description: 'Work Life Balance ID' })
+  @IsInt()
+  @IsNotEmpty()
+  work_life_balance_id: number;
 }

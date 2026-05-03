@@ -35,9 +35,9 @@ import {
 
 // Services & Guards
 import { EmployeesService } from './employees.service';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
-import { AtAuthorizationHeader } from '../common/decorators/at-authorization.decorator';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { AtAuthorizationHeader } from 'src/common/decorators/at-authorization.decorator';
 import { UserRole } from 'generated/prisma/enums';
 
 
@@ -164,7 +164,7 @@ export class EmployeesController {
         status: HttpStatus.NOT_FOUND,
         description: 'Employee not found.',
     })
-    async deleteEmployee(@Param('id', ParseUUIDPipe) id: string) {
+    async deleteEmployee(@Param('id', ParseUUIDPipe) id: number) {
         return this.employeesService.deleteEmployee(id);
     }
 

@@ -8,6 +8,9 @@ import { AtGuard } from './common/guards/at.guard';
 import { AppController } from './app.controller';
 import { UsersModule } from './users/users.module';
 import { EmployeesModule } from './employees/employees.module';
+import { AttendanceModule } from './attendance/attendance.module';
+import { VacationsModule } from './vacations/vacations.module';
+import { LookupModule } from './lookup/lookup.module';
 
 @Module({
   imports: [
@@ -17,6 +20,9 @@ import { EmployeesModule } from './employees/employees.module';
     EmailModule,
     UsersModule,
     EmployeesModule,
+    AttendanceModule,
+    VacationsModule,
+    LookupModule,
   ],
   providers: [
     // This forces the AtGuard to run on EVERY request in the application.

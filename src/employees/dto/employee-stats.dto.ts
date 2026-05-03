@@ -1,23 +1,28 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-// Fields we allow grouping by
-// Keys can be anything, but VALUES must match the exact Prisma Model column names
+/**
+ * Fields we allow grouping by for HR analytics.
+ * VALUES must match the exact column names in the Employees Prisma model.
+ */
 export enum GroupByField {
-  DEPARTMENT = 'department',
-  JOB_ROLE = 'jobRole',
-  EDUCATION_FIELD = 'educationField',
-  ATTRITION_RISK = 'attritionRiskClass', 
-  // PERFORMANCE_RATING = 'performanceRating' // Uncomment if you want to group by rating
+  DEPARTMENT = 'department_id',
+  JOB_ROLE = 'job_role_id',
+  EDUCATION = 'education_id',
+  MARITAL_STATUS = 'marital_status_id',
+  BUSINESS_TRAVEL = 'business_travel_id',
+  WORK_SHIFT = 'work_shift_id',
+  ATTRITION_RISK = 'attrition_risk_class_id',
+  PERFORMANCE = 'performance_rating_id',
 }
 
 export class EmployeeStatsDto {
-  @ApiProperty({ 
-    enum: GroupByField, 
-    description: 'The field to group data by (e.g. department)',
-    example: GroupByField.DEPARTMENT
+  @ApiProperty({
+    enum: GroupByField,
+    description: 'The relational field to group data by for analytics (e.g. department_id)',
+    example: GroupByField.DEPARTMENT,
   })
   @IsEnum(GroupByField)
-  @IsNotEmpty() // <--- Ensures the client sends this parameter
+  @IsNotEmpty()
   groupBy: GroupByField;
 }

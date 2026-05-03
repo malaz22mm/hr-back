@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { EducationFieldType, Employees, Prisma } from 'generated/prisma/client';
+import { Employees, Prisma } from 'generated/prisma/client';
 import { PrismaService } from 'src/common/prisma/prisma.service';
 import { UpdateEmployeeDto } from './dto/update.employee.dto';
 import { CreateEmployeeDto } from './dto/create.employee.dto';
 import { EmployeeQueryDto } from './dto/employee-query.dto';
 import { EmployeeStatsDto } from './dto/employee-stats.dto';
-import { AttritionRiskClassMap, AttritionTypeMap, BusinessTravelTypeMap, DepartmentTypeMap, EducationFieldTypeMap, EducationLevelMap, JobRoleTypeMap, mapEnumValue, OvertimeTypeMap, PerformanceRatingMap } from './mappers/enum-mapper';
+// import { AttritionRiskClassMap, AttritionTypeMap, BusinessTravelTypeMap, DepartmentTypeMap, EducationFieldTypeMap, EducationLevelMap, JobRoleTypeMap, mapEnumValue, OvertimeTypeMap, PerformanceRatingMap } from './mappers/enum-mapper';
 
 
 
@@ -21,8 +21,10 @@ export class EmployeesService {
 
   async findAll(params: EmployeeQueryDto) {
     const {
-      skip, take, sortBy, sortOrder,
-      // Ranges
+      skip = 0 // Default to 0 if undefined
+      , take = 10 // Default to 10 if undefined
+      , sortBy, sortOrder,
+      // Range Filters
       minAge, maxAge, minJobLevel, maxJobLevel, minMonthlyIncome, maxMonthlyIncome,
       minPercentSalaryHike, maxPercentSalaryHike, minTotalWorkingYears, maxTotalWorkingYears,
       minNumCompaniesWorked, maxNumCompaniesWorked, minYearsAtCompany, maxYearsAtCompany,
@@ -30,13 +32,16 @@ export class EmployeesService {
       minYearsWithCurrManager, maxYearsWithCurrManager, minTrainingTimesLastYear, maxTrainingTimesLastYear,
       minTrainingHoursLastYear, maxTrainingHoursLastYear, minTrainingHoursLast6Months, maxTrainingHoursLast6Months,
       minTrainingGapScore, maxTrainingGapScore, minDistanceFromHome, maxDistanceFromHome,
-      minAbsenceDaysLastMonth, maxAbsenceDaysLastMonth, minAbsenceDaysLast3Months, maxAbsenceDaysLast3Months,
       minAbsenceRatio, maxAbsenceRatio, minLateArrivalsLastMonth, maxLateArrivalsLastMonth,
       minOvertimeHoursLastMonth, maxOvertimeHoursLastMonth, minWorkloadPressureIndex, maxWorkloadPressureIndex,
       minEngagementScore, maxEngagementScore, minManagerFeedbackScore, maxManagerFeedbackScore,
-      minRoleStabilityRatio, maxRoleStabilityRatio,
-      // Exact filters (rest)
-      ...exactFilters
+      minRoleStabilityRatio, maxRoleStabilityRatio, minPromotionStagnationRatio, maxPromotionStagnationRatio,
+      // Destructure ID Filters (Categorical)
+      attrition, businessTravelId, departmentId, educationId, jobRoleId,
+      maritalStatusId, attritionRiskClassId, workShiftId, gender, overTime,
+      // Destructure Rating IDs (Satisfaction)
+      environmentSatisfactionId, jobInvolvementId, jobSatisfactionId,
+      performanceRatingId, relationshipSatisfactionId, workLifeBalanceId,
     } = params;
 
     // Helper for numeric ranges
@@ -44,106 +49,121 @@ export class EmployeesService {
       if (min === undefined && max === undefined) return undefined;
       return { gte: min, lte: max };
     };
-
-    // 1. Map String/Enum inputs to strict Prisma Client Enums
-    // We cast to 'string' here because the DTO types them as Enums, but mapEnumValue takes a string key.
-    const mappedFilters = {
-      attrition: mapEnumValue(params.attrition as unknown as string, AttritionTypeMap, 'attrition'),
-      businessTravel: mapEnumValue(params.businessTravel as unknown as string, BusinessTravelTypeMap, 'businessTravel'),
-      department: mapEnumValue(params.department as unknown as string, DepartmentTypeMap, 'department'),
-      education: mapEnumValue(params.education as unknown as string, EducationLevelMap, 'education'),
-      // FIXED: Uses the dynamic mapper, which now correctly returns the 'HUMAN_RESOURCES' key
-      educationField: mapEnumValue(params.educationField as unknown as string, EducationFieldTypeMap, 'educationField'),
-      jobRole: mapEnumValue(params.jobRole as unknown as string, JobRoleTypeMap, 'jobRole'),
-      overTime: mapEnumValue(params.overTime as unknown as string, OvertimeTypeMap, 'overTime'),
-      performanceRating: mapEnumValue(params.performanceRating as unknown as string, PerformanceRatingMap, 'performanceRating'),
-      attritionRiskClass: mapEnumValue(params.attritionRiskClass as unknown as string, AttritionRiskClassMap, 'attritionRiskClass'),
-
-      // These fields are already standard types (string/float) or mapped by DTO
-      gender: params.gender,
-      maritalStatus: params.maritalStatus, // Mapped automatically if using strict DTO enum
-      environmentSatisfaction: params.environmentSatisfaction,
-      jobInvolvement: params.jobInvolvement,
-      jobSatisfaction: params.jobSatisfaction,
-      relationshipSatisfaction: params.relationshipSatisfaction,
-      workLifeBalance: params.workLifeBalance,
+    // 1. Build the Relational/Categorical Filters
+    const idFilters = {
+      attrition,
+      gender,
+      over_time: overTime,
+      business_travel_id: businessTravelId,
+      department_id: departmentId,
+      education_id: educationId,
+      job_role_id: jobRoleId,
+      marital_status_id: maritalStatusId,
+      attrition_risk_class_id: attritionRiskClassId,
+      work_shift_id: workShiftId,
+      // Satisfaction mappings
+      environment_satisfaction_id: environmentSatisfactionId,
+      job_involvement_id: jobInvolvementId,
+      job_satisfaction_id: jobSatisfactionId,
+      performance_rating_id: performanceRatingId,
+      relationship_satisfaction_id: relationshipSatisfactionId,
+      work_life_balance_id: workLifeBalanceId,
     };
 
-    // 2. Construct Numeric Ranges
+    // 2. Construct Numeric Ranges (Snake_case alignment)
     const numericFilters = {
       age: range(minAge, maxAge),
-      jobLevel: range(minJobLevel, maxJobLevel),
-      monthlyIncome: range(minMonthlyIncome, maxMonthlyIncome),
-      percentSalaryHike: range(minPercentSalaryHike, maxPercentSalaryHike),
-      totalWorkingYears: range(minTotalWorkingYears, maxTotalWorkingYears),
-      numCompaniesWorked: range(minNumCompaniesWorked, maxNumCompaniesWorked),
-      yearsAtCompany: range(minYearsAtCompany, maxYearsAtCompany),
-      yearsInCurrentRole: range(minYearsInCurrentRole, maxYearsInCurrentRole),
-      yearsSinceLastPromotion: range(minYearsSinceLastPromotion, maxYearsSinceLastPromotion),
-      yearsWithCurrManager: range(minYearsWithCurrManager, maxYearsWithCurrManager),
-      trainingTimesLastYear: range(minTrainingTimesLastYear, maxTrainingTimesLastYear),
-      trainingHoursLastYear: range(minTrainingHoursLastYear, maxTrainingHoursLastYear),
-      trainingHoursLast6Months: range(minTrainingHoursLast6Months, maxTrainingHoursLast6Months),
-      trainingGapScore: range(minTrainingGapScore, maxTrainingGapScore),
-      distanceFromHome: range(minDistanceFromHome, maxDistanceFromHome),
-      absenceDaysLastMonth: range(minAbsenceDaysLastMonth, maxAbsenceDaysLastMonth),
-      absenceDaysLast3Months: range(minAbsenceDaysLast3Months, maxAbsenceDaysLast3Months),
-      absenceRatio: range(minAbsenceRatio, maxAbsenceRatio),
-      lateArrivalsLastMonth: range(minLateArrivalsLastMonth, maxLateArrivalsLastMonth),
-      overtimeHoursLastMonth: range(minOvertimeHoursLastMonth, maxOvertimeHoursLastMonth),
-      workloadPressureIndex: range(minWorkloadPressureIndex, maxWorkloadPressureIndex),
-      engagementScore: range(minEngagementScore, maxEngagementScore),
-      managerFeedbackScore: range(minManagerFeedbackScore, maxManagerFeedbackScore),
-      roleStabilityRatio: range(minRoleStabilityRatio, maxRoleStabilityRatio),
+      job_level: range(minJobLevel, maxJobLevel),
+      monthly_income: range(minMonthlyIncome, maxMonthlyIncome),
+      percent_salary_hike: range(minPercentSalaryHike, maxPercentSalaryHike),
+      total_working_years: range(minTotalWorkingYears, maxTotalWorkingYears),
+      num_of_companies_worked: range(minNumCompaniesWorked, maxNumCompaniesWorked),
+      years_at_company: range(minYearsAtCompany, maxYearsAtCompany),
+      years_in_current_role: range(minYearsInCurrentRole, maxYearsInCurrentRole),
+      years_since_last_promotion: range(minYearsSinceLastPromotion, maxYearsSinceLastPromotion),
+      years_with_curr_manager: range(minYearsWithCurrManager, maxYearsWithCurrManager),
+      training_times_last_year: range(minTrainingTimesLastYear, maxTrainingTimesLastYear),
+      training_hours_last_year: range(minTrainingHoursLastYear, maxTrainingHoursLastYear),
+      training_hours_last_6_months: range(minTrainingHoursLast6Months, maxTrainingHoursLast6Months),
+      training_gap_score: range(minTrainingGapScore, maxTrainingGapScore),
+      distance_from_home: range(minDistanceFromHome, maxDistanceFromHome),
+      late_arrivals_last_month: range(minLateArrivalsLastMonth, maxLateArrivalsLastMonth),
+      overload_pressure_index: range(minWorkloadPressureIndex, maxWorkloadPressureIndex),
+      engagement_score: range(minEngagementScore, maxEngagementScore),
+      engagement_feedback_score: range(minManagerFeedbackScore, maxManagerFeedbackScore),
+      role_stability_ratio: range(minRoleStabilityRatio, maxRoleStabilityRatio),
+      promotion_stagnation_ratio: range(minPromotionStagnationRatio, maxPromotionStagnationRatio),
     };
+    // 3. Merge and Cleanup undefined filters
+    const where: Prisma.EmployeesWhereInput = {};
+    const allFilters = { ...idFilters, ...numericFilters };
 
-    // 3. Merge all filters
-    const where: Prisma.EmployeesWhereInput = {
-      ...mappedFilters,
-      ...numericFilters,
-    };
 
-    // 4. Remove undefined keys (Cleanup)
-    Object.keys(where).forEach((key) => {
-      if ((where as any)[key] === undefined) delete (where as any)[key];
-    });
+    for (const key in allFilters) {
+      const value = allFilters[key as keyof typeof allFilters];
+      if (value !== undefined) {
+        (where as any)[key] = value;
+      }
+    }
 
-    // 5. Sorting logic
+    // 4. Sorting logic
     const orderBy: Prisma.EmployeesOrderByWithRelationInput[] = [];
     if (sortBy) {
-      orderBy.push({ [sortBy]: sortOrder } as Prisma.EmployeesOrderByWithRelationInput);
+      orderBy.push({ [sortBy]: sortOrder });
     }
-    // Always add ID sort for stable pagination
     orderBy.push({ id: 'asc' });
 
-    // 6. Execute Database Query
+    // 5. Execute Database Query with Joins
     const [data, total] = await Promise.all([
       this.prisma.employees.findMany({
         skip,
         take,
-        where, // Uses the dynamic 'where' object
+        where,
         orderBy,
+        include: {
+          Department: true,
+          JobRole: true,
+          WorkShift: true,
+          MaritalStatus: true,
+          Education: true,
+          BusinessTravel: true,
+          // Satisfaction joins
+          EnvironmentSatisfaction: true,
+          JobInvolvement: true,
+          JobSatisfaction: true,
+          PerformanceRating: true,
+          RelationshipSat: true,
+          WorkLifeBalance: true,
+        },
       }),
       this.prisma.employees.count({ where }),
     ]);
 
-    return { data, meta: { total, skip, take } };
+    return {
+      data,
+      meta: {
+        total,
+        skip,
+        take,
+        pages: Math.ceil(total / take)
+      }
+    };
   }
 
 
   async createEmployee(newEmp: CreateEmployeeDto) {
     try {
-      const employee = await this.prisma.employees.create({
-        data: newEmp,
+      return await this.prisma.employees.create({
+        data: {
+          ...newEmp, // Only if keys match schema exactly
+          // Example if keys differ:
+          // department_id: newEmp.departmentId, 
+          // job_role_id: newEmp.jobRoleId,
+        },
       });
-      return employee;
     } catch (error) {
-      // Handle unique constraint violations (P2002) if you have unique fields (e.g. email)
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
-        throw new BadRequestException('Employee already exists (unique constraint violation).');
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new BadRequestException('Employee already exists.');
       }
       throw error;
     }
@@ -155,11 +175,15 @@ export class EmployeesService {
 
     try {
       return await this.prisma.employees.update({
-        where: { id },
-        data: data,
+        where: { id: Number(id) }, // Explicit cast to Int for schema compliance
+        data: {
+          ...data,
+          // If your DTO doesn't match schema snake_case exactly, map them here:
+          // department_id: data.departmentId,
+          // work_shift_id: data.workShiftId,
+        },
       });
     } catch (error) {
-      // P2025: An operation failed because it depends on one or more records that were required but not found.
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2025'
@@ -171,18 +195,28 @@ export class EmployeesService {
   }
 
 
-  async deleteEmployee(id: string): Promise<void> {
+  async deleteEmployee(id: number): Promise<void> {
+
+    // Enhancement:
+    // The "Soft Delete" (Recommended for HR Systems)
+    // Instead of removing the record, you add a deletedAt timestamp to the Employees model.
+    //  This preserves the historical attendance and payroll data for legal/auditing reasons.
     try {
-      await this.prisma.employees.delete({
-        where: { id },
-      });
+      await this.prisma.$transaction([
+        // 1. Clean up dependent logs first
+        this.prisma.attendance_Logs.deleteMany({ where: { emp_id: id } }),
+        this.prisma.vacation_Request.deleteMany({ where: { emp_id: id } }),
+        // 2. Delete the actual employee
+        this.prisma.employees.delete({ where: { id } }),
+      ]);
     } catch (error) {
-      // P2025: Record to delete does not exist
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        throw new NotFoundException(`Employee with ID ${id} not found`);
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          throw new NotFoundException(`Employee with ID ${id} not found`);
+        }
+        if (error.code === 'P2003') {
+          throw new BadRequestException(`Cannot delete employee due to existing related data.`);
+        }
       }
       throw error;
     }
@@ -190,35 +224,36 @@ export class EmployeesService {
 
 
   async getStats(params: EmployeeStatsDto) {
-    const { groupBy } = params;
+    const { groupBy } = params; // e.g., 'department_id'
 
-    // Prisma groupBy query
     const result = await this.prisma.employees.groupBy({
-      by: [groupBy as any], // Cast needed because Prisma types are strict on literal unions
+      by: [groupBy as any],
       _count: {
-        id: true, // Count number of employees in this group
+        id: true,
       },
       _avg: {
-        monthlyIncome: true,
+        monthly_income: true,
         age: true,
-        yearsAtCompany: true,
-        engagementScore: true,
-        // performanceRating: true, // Enum values are stored as strings? Prisma _avg only works on Int/Float. 
-        // Note: performanceRating is an Enum in your schema, so _avg won't work on it directly unless mapped to Int.
-        // We will stick to numeric fields for _avg.
-        workloadPressureIndex: true,
+        years_at_company: true,
+        engagement_score: true,
+        workload_pressure_index: true,
       },
     });
 
-    // Format the result for easier frontend consumption
-    return result.map((group) => ({
-      group: group[groupBy], // e.g., "Sales"
-      count: group._count.id,
-      averageSalary: Math.round(group._avg.monthlyIncome || 0),
-      averageAge: Math.round(group._avg.age || 0),
-      averageTenure: parseFloat((group._avg.yearsAtCompany || 0).toFixed(1)),
-      avgEngagement: parseFloat((group._avg.engagementScore || 0).toFixed(1)),
-      avgWorkload: parseFloat((group._avg.workloadPressureIndex || 0).toFixed(1)),
-    }));
+    // Format and return
+    return result.map((group) => {
+      // Dynamic access using the snake_case key from DTO
+      const groupId = group[groupBy as string];
+
+      return {
+        group: groupId, // Returning ID. Frontend can map or you can join labels here.
+        count: group._count.id,
+        averageSalary: Math.round(group._avg.monthly_income || 0),
+        averageAge: Math.round(group._avg.age || 0),
+        averageTenure: parseFloat((group._avg.years_at_company || 0).toFixed(1)),
+        avgEngagement: parseFloat((group._avg.engagement_score || 0).toFixed(1)),
+        avgWorkload: parseFloat((group._avg.workload_pressure_index || 0).toFixed(1)),
+      };
+    });
   }
 }

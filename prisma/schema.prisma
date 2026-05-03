@@ -6,211 +6,201 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // url      = env("DATABASE_URL")
 }
 
 model Users {
-  id                         String    @id @default(uuid())
+  id                         String             @id @default(uuid())
   name                       String
-  role                       UserRole  @default(ADMIN)
-  approvalState              ApprState @default(NOT_VERIFIED)
+  role                       UserRole           @default(ADMIN)
+  approvalState              ApprState          @default(NOT_VERIFIED)
   verificationCode           Int?
   verificationCode_ExpiresAt DateTime?
-  email                      String    @unique @db.VarChar(255)
-  phone                      String?   @unique @db.VarChar(50)
+  email                      String             @unique @db.VarChar(255)
+  phone                      String?            @unique @db.VarChar(50)
   hashedPassword             String
   hashedRefreshToken         String?
   hashedAccessToken          String?
-  createdAt                  DateTime  @default(now())
-  updatedAt                  DateTime  @updatedAt
-  // admin                      Admins?
-  // employee                   Employees?
+  createdAt                  DateTime           @default(now())
+  updatedAt                  DateTime           @updatedAt
+  processed_vacations        Vacation_Request[]
 }
-
-// model Admins {
-//   id               String @id @unique
-//   permissionsLevel Int    @default(1)
-//   user             Users  @relation(fields: [id], references: [id])
-// }
 
 model Employees {
-  id                       String             @id @default(uuid())
-  attrition                AttritionType
-  age                      Int
-  gender                   String
-  maritalStatus            MaritalStatusType
-  distanceFromHome         Int
-  monthlyIncome            Int
-  percentSalaryHike        Int
-  jobLevel                 Int // 1 -> 5
-  jobRole                  JobRoleType
-  businessTravel           BusinessTravelType
-  department               DepartmentType
-  education                EducationLevel
-  educationField           EducationFieldType
-  numCompaniesWorked       Int
-  totalWorkingYears        Int
-  trainingTimesLastYear    Int
-  trainingHoursLastYear    Int
-  trainingHoursLast6Months Int
-  trainingGapScore         Int
-  yearsAtCompany           Int
-  yearsInCurrentRole       Int
-  yearsSinceLastPromotion  Int
-  yearsWithCurrManager     Int
-  environmentSatisfaction  SatisfactionRating
-  jobInvolvement           SatisfactionRating
-  jobSatisfaction          SatisfactionRating
-  performanceRating        PerformanceRating
-  relationshipSatisfaction SatisfactionRating
-  workLifeBalance          SatisfactionRating
-  overTime                 OvertimeType
-  absenceDaysLastMonth     Int
-  absenceDaysLast3Months   Int
-  absenceRatio             Float
-  lateArrivalsLastMonth    Int
-  overtimeHoursLastMonth   Float
-  workloadPressureIndex    Int
-  engagementScore          Int
-  managerFeedbackScore     Int
-  roleStabilityRatio       Float
-  attritionRiskClass       AttritionRiskClass
-  // hourlyRate               Int
-  // dailyRate                Int
-  // monthlyRate              Int
-  // stockOptionLevel         Int
-  // promotionStagnationRatio Float
+  id                           Int                @id @default(autoincrement())
+  name                         String
+  name_code                    String
+  attrition                    Boolean
+  age                          Int
+  gender                       Boolean // true for men
+  distance_from_home           Int
+  hourly_rate                  Int
+  daily_rate                   Int
+  monthly_rate                 Int
+  monthly_income               Int
+  percent_salary_hike          Int
+  job_level                    Int
+  num_of_companies_worked      Int
+  total_working_years          Int
+  training_times_last_year     Int
+  years_at_company             Int
+  years_in_current_role        Int
+  years_since_last_promotion   Int
+  years_with_curr_manager      Int
+  stock_option_level           Int
+  over_time                    Boolean
+  workload_pressure_index      Int
+  engagement_score             Int
+  engagement_feedback_score    Int
+  training_hours_last_year     Int
+  training_hours_last_6_months Int
+  training_gap_score           Int
+  promotion_stagnation_ratio   Float
+  role_stability_ratio         Float
 
-  // user                     Users              @relation(fields: [id], references: [id])
-  vacationRequests VacationRequest[]
+  // Foreign Keys
+  marital_status_id          Int
+  job_role_id                Int
+  business_travel_id         Int
+  department_id              Int
+  education_id               Int
+  performance_rating_id      Int
+  attrition_risk_class_id    Int
+  environment_satisfaction_id Int
+  job_involvement_id         Int
+  job_satisfaction_id        Int
+  relationship_satisfaction_id Int
+  work_life_balance_id       Int
+  work_shift_id                Int
+
+  // Relations
+  MaritalStatus          MaritalStatus          @relation(fields: [marital_status_id], references: [id])
+  JobRole                JobRoleType            @relation(fields: [job_role_id], references: [id])
+  BusinessTravel         BusinessTravel         @relation(fields: [business_travel_id], references: [id])
+  Department             DepartmentType         @relation(fields: [department_id], references: [id])
+  Education              Education              @relation(fields: [education_id], references: [id])
+  PerformanceRating      PerformanceRating      @relation(fields: [performance_rating_id], references: [id])
+  AttritionRiskClass     AttritionRiskClass     @relation(fields: [attrition_risk_class_id], references: [id])
+  EnvironmentSatisfaction Satisfaction           @relation("EnvSat", fields: [environment_satisfaction_id], references: [id])
+  JobInvolvement         Satisfaction           @relation("JobInv", fields: [job_involvement_id], references: [id])
+  JobSatisfaction        Satisfaction           @relation("JobSat", fields: [job_satisfaction_id], references: [id])
+  RelationshipSat        Satisfaction           @relation("RelSat", fields: [relationship_satisfaction_id], references: [id])
+  WorkLifeBalance        Satisfaction           @relation("WLB", fields: [work_life_balance_id], references: [id])
+  Vacation_Requests      Vacation_Request[]
+  Attendance_Logs        Attendance_Logs[]
+  WorkShift              WorkShift              @relation(fields: [work_shift_id], references: [id])
 }
 
-model VacationRequest {
-  id         Int       @id @default(autoincrement())
-  empId      String    @map("emp_id")
-  employee   Employees @relation(fields: [empId], references: [id], onDelete: Cascade)
-  startDate  DateTime  @db.Date
-  endDate    DateTime  @db.Date
-  reason     String
-  apprStatus Boolean
+model MaritalStatus {
+  id        Int         @id
+  name      String
+  name_code String
+  Employees Employees[]
+}
 
-  @@index([empId])
-  @@map("Vacation_Request")
+model BusinessTravel {
+  id        Int         @id
+  name      String
+  name_code String
+  Employees Employees[]
+}
+
+model DepartmentType {
+  id        Int         @id
+  name      String
+  name_code String
+  Employees Employees[]
+}
+
+model Education {
+  id        Int         @id
+  name      String
+  name_code String
+  Employees Employees[]
+}
+
+model Satisfaction {
+  id        Int         @id
+  name      String
+  name_code String
+  
+  EnvSatEmployees Employees[] @relation("EnvSat")
+  JobInvEmployees Employees[] @relation("JobInv")
+  JobSatEmployees Employees[] @relation("JobSat")
+  RelSatEmployees Employees[] @relation("RelSat")
+  WLBEmployees    Employees[] @relation("WLB")
+}
+
+model JobRoleType {
+  id        Int         @id
+  name      String
+  name_code String
+  Employees Employees[]
+}
+
+model PerformanceRating {
+  id        Int         @id
+  name      String
+  name_code String
+  Employees Employees[]
+}
+
+model AttritionRiskClass {
+  id        Int         @id
+  name      String
+  name_code String
+  Employees Employees[]
+}
+
+model RequestStatus {
+  id                Int                @id
+  name              String
+  Vacation_Requests Vacation_Request[]
+}
+
+model Vacation_Request {
+  id              Int           @id @default(autoincrement())
+  emp_id          Int
+  processed_by    String?
+  processed_at    DateTime?
+  requested_at    DateTime      @default(now())
+  start_date      DateTime      @db.Date
+  end_date        DateTime      @db.Date
+  reason          String
+  approval_status Int
+
+  Employee      Employees     @relation(fields: [emp_id], references: [id])
+  Processor     Users?         @relation(fields: [processed_by], references: [id])
+  RequestStatus RequestStatus @relation(fields: [approval_status], references: [id])
+}
+
+model WorkShift {
+  id                   Int               @id @default(autoincrement())
+  shift_name           String
+  start_time           DateTime
+  end_time             DateTime
+  grace_period_minutes Int
+  Attendance_Logs      Attendance_Logs[]
+  Employees            Employees[]
+}
+
+model Attendance_Logs {
+  id        Int       @id @default(autoincrement())
+  emp_id    Int
+  check_in  DateTime
+  check_out DateTime?
+  shift_id  Int
+
+  Employee  Employees @relation(fields: [emp_id], references: [id])
+  WorkShift WorkShift @relation(fields: [shift_id], references: [id])
 }
 
 enum UserRole {
   ADMIN
   SUPER_ADMIN
-  // see the comment in the users.service: addUser function
-
-  //   Because UserRole has no @map(),
-  // Prisma stores exactly what the enum key is.
-
-  // But I should still use UserRole.SUPER_ADMIN in code.
-
-  // Because for e.g.: EducationFieldType has @map(),
-  // Prisma queries must always use
-  // EducationFieldType.MARKETING,
-  // and strings will never work.
 }
 
 enum ApprState {
   VERIFIED
   NOT_VERIFIED
-}
-
-enum AttritionType {
-  YES @map("Yes")
-  NO  @map("No")
-}
-
-enum OvertimeType {
-  YES @map("Yes")
-  NO  @map("No")
-}
-
-enum BusinessTravelType {
-  NON_TRAVEL        @map("Non-Travel")
-  TRAVEL_RARELY     @map("Travel_Rarely")
-  TRAVEL_FREQUENTLY @map("Travel_Frequently")
-}
-
-enum DepartmentType {
-  RESEARCH_DEVELOPMENT @map("Research & Development")
-  SALES                @map("Sales")
-  HUMAN_RESOURCES      @map("Human Resources")
-}
-
-enum EducationLevel {
-  BELOW_COLLEGE @map("Below College")
-  COLLEGE       @map("College")
-  BACHELOR      @map("Bachelor")
-  MASTER        @map("Master")
-  DOCTOR        @map("Doctor")
-}
-
-enum EducationFieldType {
-  LIFE_SCIENCES    @map("Life Sciences")
-  MEDICAL          @map("Medical")
-  MARKETING        @map("Marketing")
-  TECHNICAL_DEGREE @map("Technical Degree")
-  HUMAN_RESOURCES  @map("Human Resources")
-  OTHER            @map("Other")         
-  /*
-           ** Very Important Note: **
-  - When you use @map(), this code will not work:
-        this.prisma.employees.findMany({
-          where:{
-            educationField:EducationFieldType.HUMAN_RESOURCES
-          }
-
-  - This one also will not work:
-        this.prisma.employees.findMany({
-          where:{
-            educationField:"Human Resources"
-          }
-
-  - Only this one worked:
-        this.prisma.employees.findMany({
-            where:{
-              educationField:"HUMAN_RESOURCES" as any
-            }
-  */
-}
-
-enum JobRoleType {
-  SALES_EXECUTIVE           @map("Sales Executive")
-  RESEARCH_SCIENTIST        @map("Research Scientist")
-  LABORATORY_TECHNICIAN     @map("Laboratory Technician")
-  MANUFACTURING_DIRECTOR    @map("Manufacturing Director")
-  HEALTHCARE_REPRESENTATIVE @map("Healthcare Representative")
-  MANAGER                   @map("Manager")
-  SALES_REPRESENTATIVE      @map("Sales Representative")
-  RESEARCH_DIRECTOR         @map("Research Director")
-  HUMAN_RESOURCES           @map("Human Resources")
-}
-
-enum MaritalStatusType {
-  SINGLE   @map("Single")
-  MARRIED  @map("Married")
-  DIVORCED @map("Divorced")
-}
-
-enum SatisfactionRating {
-  LOW       @map("Low")
-  MEDIUM    @map("Medium")
-  HIGH      @map("High")
-  VERY_HIGH @map("Very High")
-}
-
-enum PerformanceRating {
-  LOW         @map("Low")
-  GOOD        @map("Good")
-  EXCELLENT   @map("Excellent")
-  OUTSTANDING @map("Outstanding")
-}
-
-enum AttritionRiskClass {
-  LOW    @map("Low")
-  MEDIUM @map("Medium")
-  HIGH   @map("High")
 }
