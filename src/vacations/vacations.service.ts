@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
-import { Prisma } from '../../generated/prisma/client';
+import {  Prisma } from 'generated/prisma/client';
 @Injectable()
 export class VacationsService {
   constructor(private prisma: PrismaService) {}

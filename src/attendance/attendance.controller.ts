@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Param, Query, Body, ParseIntPipe } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { AtAuthorizationHeader } from '../common/decorators/at-authorization.decorator';
+import { AtAuthorizationHeader } from 'src/common/decorators/at-authorization.decorator';
 
 @ApiTags('Attendance')
 @AtAuthorizationHeader()

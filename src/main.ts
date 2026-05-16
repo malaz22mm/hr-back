@@ -1,61 +1,52 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory } from "@nestjs/core";
+import { AppModule } from "./app.module";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import * as fs from 'fs';
 import * as dotenv from 'dotenv';
-import { AppModule } from './app.module';
-import { configureApp } from './app.config';
+import { ValidationPipe } from "@nestjs/common";
+import { METHODS } from "http";
 
-const SAFE_ENV_KEYS = [
-  'NODE_ENV',
-  'PORT',
-  'DB_HOST',
-  'DB_DATABASE',
-  'DB_PORT',
-  'DB_USERNAME',
-] as const;
+dotenv.config();
+//Now process.env is available everywhere (Services, Controllers, Modules)
 
-function loadLocalEnv(): void {
-  dotenv.config({ quiet: true });
-}
-
-function logStartupEnv(): void {
-  console.log('[Bootstrap] Environment variables (safe subset):');
-  for (const key of SAFE_ENV_KEYS) {
-    console.log(`[Bootstrap]   ${key}=${process.env[key] ?? '(not set)'}`);
-  }
-  console.log(
-    `[Bootstrap]   DATABASE_URL=${process.env.DATABASE_URL ? '(set)' : '(not set)'}`,
-  );
-  console.log(
-    `[Bootstrap]   AT_SECRET=${process.env.AT_SECRET ? '(set)' : '(not set)'}`,
-  );
-  console.log(
-    `[Bootstrap]   RT_SECRET=${process.env.RT_SECRET ? '(set)' : '(not set)'}`,
-  );
-}
-
-async function bootstrap(): Promise<void> {
-  loadLocalEnv();
-
-  console.log('[Bootstrap] Starting NestJS (local development)...');
-  logStartupEnv();
-
-  const port = Number(process.env.PORT) || 3000;
-  console.log(`[Bootstrap] Target port: ${port}`);
-
+async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  console.log('[Bootstrap] AppModule loaded');
 
-  await configureApp(app);
+  // Enable Validation Globally
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Strips properties that are not in the DTO
+      transform: true, // Automatically transforms payloads to DTO instances
+      forbidNonWhitelisted: true, // Throws error if extra properties are sent
+      transformOptions: {
+        enableImplicitConversion: true, // Helps with converting strings to numbers in Query params
+      },
+    }),
+  );
 
-  await app.listen(port);
-  console.log(`[Bootstrap] Server listening on http://localhost:${port}`);
-}
+  const config = new DocumentBuilder()
+    .setTitle("Talabaty Backend Documentation")
+    .setDescription("Endpoints' description")
+    .addBearerAuth()
+    .build();
 
-const isDirectRun =
-  typeof require !== 'undefined' && require.main === module;
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
 
-if (isDirectRun) {
-  bootstrap().catch((error) => {
-    console.error('[Bootstrap] Fatal startup error:', error);
-    process.exit(1);
+  fs.writeFileSync('swagger-spec.json', JSON.stringify(document));
+
+  app.enableCors({
+    origin: [
+      'http://localhost:5173',
+      'https://hrdashboardai.netlify.app',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: '*',
+    credentials: true,
   });
+
+
+  await app.listen(process.env.PORT || 3000);
 }
+
+bootstrap();

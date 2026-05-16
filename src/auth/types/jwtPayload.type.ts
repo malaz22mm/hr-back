@@ -1,4 +1,4 @@
-import { UserRole } from '../../../generated/prisma/enums';
+import { UserRole } from "generated/prisma/enums";
 
 // Define the shape of the payload encoded in your Access Token
 export type JwtPayload = {

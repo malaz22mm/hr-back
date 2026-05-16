@@ -10,13 +10,6 @@ export class AtGuard extends AuthGuard('jwt') {
   }
 
   canActivate(context: ExecutionContext) {
-    const request = context.switchToHttp().getRequest<{ method?: string }>();
-
-    // CORS preflight must bypass JWT — browser sends OPTIONS without Authorization
-    if (request.method === 'OPTIONS') {
-      return true;
-    }
-
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),

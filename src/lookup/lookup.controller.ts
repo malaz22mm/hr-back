@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { LookupService } from './lookup.service';
-import { AtAuthorizationHeader } from '../common/decorators/at-authorization.decorator';
+import { AtAuthorizationHeader } from 'src/common/decorators/at-authorization.decorator';
 
 @ApiTags('Lookups')
 @AtAuthorizationHeader()
