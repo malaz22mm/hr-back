@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { Employees, Prisma } from 'generated/prisma/client';
-import { PrismaService } from 'src/common/prisma/prisma.service';
+import { Employees, Prisma } from '../../generated/prisma/client';
+import { PrismaService } from '../common/prisma/prisma.service';
 import { UpdateEmployeeDto } from './dto/update.employee.dto';
 import { CreateEmployeeDto } from './dto/create.employee.dto';
 import { EmployeeQueryDto } from './dto/employee-query.dto';

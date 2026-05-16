@@ -1,13 +1,13 @@
 import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { PrismaService } from 'src/common/prisma/prisma.service';
+import { PrismaService } from '../common/prisma/prisma.service';
 import bcrypt from 'bcrypt';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
 // import * as env from 'dotenv';
 // import { SignupDto } from './dto/signup.dto';
 import { SignInDto } from './dto/signin.dto';
-import { EmailService } from 'src/auth/email/email.service';
-import { ApprState, UserRole } from 'generated/prisma/enums';
+import { EmailService } from './email/email.service';
+import { ApprState, UserRole } from '../../generated/prisma/enums';
 import { VerifingDto } from './dto/verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtPayload } from './types/jwtPayload.type';

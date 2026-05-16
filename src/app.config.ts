@@ -54,17 +54,20 @@ export async function configureApp(app: INestApplication): Promise<void> {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
-  console.log('[Bootstrap] Swagger available at /api/docs');
 
-  if (!process.env.VERCEL) {
-    try {
-      const fs = await import('fs');
-      fs.writeFileSync('swagger-spec.json', JSON.stringify(document));
-      console.log('[Bootstrap] swagger-spec.json written');
-    } catch (error) {
-      console.warn('[Bootstrap] Could not write swagger-spec.json:', error);
-    }
+  // Must NOT use /api/docs — Vercel reserves /api/* for the api/ serverless folder (404 NOT_FOUND)
+  SwaggerModule.setup('docs', app, document, {
+    customSiteTitle: 'Talabaty Backend API',
+    jsonDocumentUrl: 'docs-json',
+  });
+  console.log('[Bootstrap] Swagger UI: /docs');
+  console.log('[Bootstrap] OpenAPI JSON: /docs-json');
+
+  try {
+    const fs = await import('fs');
+    fs.writeFileSync('swagger-spec.json', JSON.stringify(document));
+  } catch (error) {
+    console.warn('[Bootstrap] Could not write swagger-spec.json:', error);
   }
 
   console.log('[Bootstrap] Application configuration complete');
