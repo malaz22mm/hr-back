@@ -11,7 +11,7 @@
   "scripts": {
     "build": "nest build",
     "build:vercel": "nest build -p tsconfig.vercel.json",
-    "vercel-build": "npm run build:vercel",
+    "vercel-build": "npm run build:vercel && node -e \"require('fs').mkdirSync('public',{recursive:true})\"",
     "postinstall": "prisma generate --no-hints",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

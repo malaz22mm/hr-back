@@ -3,6 +3,7 @@
   "version": 2,
   "framework": null,
   "buildCommand": "npm run vercel-build",
+  "outputDirectory": "public",
   "functions": {
     "api/index.ts": {
       "memory": 1024,
