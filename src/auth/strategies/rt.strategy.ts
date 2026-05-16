@@ -2,11 +2,9 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Request } from 'express';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import * as dotenv from 'dotenv';
 import { JwtPayload } from '../types/jwtPayload.type';
 import { jwtPayloadWithRt } from '../types/jwtPayloadWithRt.type';
 import { ConfigService } from '@nestjs/config';
-dotenv.config();
 
 @Injectable()
 export class RtStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {

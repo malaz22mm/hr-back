@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.build.json",
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "scripts",
+    "src/database",
+    "src/main.ts",
+    "**/*spec.ts"
+  ]
+}
