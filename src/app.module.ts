@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core'; // Import APP_GUARD
 import { AuthModule } from './auth/auth.module';
@@ -39,4 +39,10 @@ import { LookupModule } from './lookup/lookup.module';
   ],
   controllers: [AppController],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  private readonly logger = new Logger(AppModule.name);
+
+  onModuleInit(): void {
+    this.logger.log('AppModule initialized — all feature modules loaded');
+  }
+}

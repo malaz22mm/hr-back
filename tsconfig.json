@@ -11,7 +11,6 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
@@ -25,7 +24,7 @@
   },
   // "exclude": ["node_modules", "test", "dist"]
   
-  "include": ["src/**/*", "src/i18n/**/*.json", "scripts/**/*.ts"]
+  "include": ["src/**/*", "src/i18n/**/*.json"]
 }
 
 

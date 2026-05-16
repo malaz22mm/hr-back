@@ -1,4 +1,4 @@
-import { UserRole } from "generated/prisma/enums";
+import { UserRole } from '../generated/prisma/enums';
 
 const r:Record<string,number>={
     ['hi']:1,

@@ -3,10 +3,10 @@
  *
  * From NestJS, reuse the same entrypoint with your `PrismaService` (it extends `PrismaClient`):
  *
- *   import { seedVacationRequests } from 'src/database/seed/vacation-request.seed';
+ *   import { seedVacationRequests } from './vacation-request.seed';
  *   await seedVacationRequests(this.prisma, { clearExisting: true, maxTotal: 500 });
  */
-import type { PrismaClient } from 'generated/prisma/client';
+import type { PrismaClient } from '../../../generated/prisma/client';
 
 const REASONS = [
   'Annual leave',

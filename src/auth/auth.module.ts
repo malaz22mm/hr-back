@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module, OnModuleInit } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -15,4 +15,10 @@ import { EmailModule } from './email/email.module';
   providers: [AuthService, AtStrategy, RtStrategy],
   exports: [AuthService], // Export if other modules need to check auth status
 })
-export class AuthModule {}
+export class AuthModule implements OnModuleInit {
+  private readonly logger = new Logger(AuthModule.name);
+
+  onModuleInit(): void {
+    this.logger.log('Authentication module initialized (JWT strategies registered)');
+  }
+}
