@@ -1,14 +1,11 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "framework": null,
   "buildCommand": "npm run vercel-build",
-  "installCommand": "npm install",
   "functions": {
     "api/index.ts": {
-      "memory": 1024,
-      "maxDuration": 30,
-      "includeFiles": "{dist/**,generated/**}"
+      "runtime": "@vercel/node",
+      "includeFiles": "dist/**"
     }
   },
   "rewrites": [
