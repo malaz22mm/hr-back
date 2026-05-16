@@ -7,7 +7,7 @@
     "api/index.ts": {
       "memory": 1024,
       "maxDuration": 30,
-      "includeFiles": "dist/**"
+      "includeFiles": "{dist/**,generated/**}"
     }
   },
   "rewrites": [
