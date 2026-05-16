@@ -1,17 +1,17 @@
-{
-  "version": 2,
-  "framework": null,
-  "buildCommand": "npm run vercel-build",
-  "functions": {
-    "api/index.ts": {
-      "runtime": "nodejs20.x",
-      "includeFiles": "dist/**"
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/api/index"
-    }
-  ]
-}
+
+  {
+    "version": 2,
+    "builds": [
+      {
+        "src": "serverless.ts",
+        "use": "@vercel/node"
+      }
+    ],
+    "routes": [
+      {
+        "src": "/(.*)",
+        "dest": "serverless.ts"
+      }
+    ]
+  }
+
