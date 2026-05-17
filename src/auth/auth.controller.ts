@@ -1,7 +1,16 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBody, ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  ApiBody,
+  ApiExtraModels,
+  ApiHeader,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  getSchemaPath,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { Tokens } from './types';
 import { SignInDto } from './dto/signin.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtPayload } from './types/jwtPayload.type';
@@ -11,8 +20,8 @@ import { AtAuthorizationHeader } from '../common/decorators/at-authorization.dec
 import { UserIdDto } from './dto/resend-verification-code.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MyPublic } from '../common/decorators/public.decorator';
+import { TokensDto, VerificationRequiredDto } from '../common/dto/tokens.dto';
 
-// Create a typed Request interface for cleaner access to user data
 interface LogoutRequest extends Request {
   user: JwtPayload;
 }
@@ -21,91 +30,63 @@ interface RefreshRequest extends Request {
 }
 
 @ApiTags('Auth')
+@ApiExtraModels(TokensDto, VerificationRequiredDto)
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
-
-  // @MyPublic() // <--- This allows access without an Access Token
-  // @Post('local/signup')
-  // @HttpCode(HttpStatus.CREATED)
-  // @ApiBody({ type: SignupDto })
-  // @ApiResponse({ status: 201, description: 'Signup succeeded / Created successfully' })
-  // @ApiResponse({ status: 400, description: 'Bad Request, doesn\'t match the Dto blue-print' })
-  // @ApiResponse({ status: 403, description: 'Signup failed' })
-  // signupLocal(@Body() dto: SignupDto): Promise<string> {
-  //   return this.authService.signupLocal(dto);
-  // }
+  constructor(private readonly authService: AuthService) {}
 
   @MyPublic()
-  @Post("local/signin")
+  @Post('local/signin')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: "Sign in using email or phone to get tokens",
-    description: "Provide either **email** or **phone** to login."
+    summary: 'Sign in using email or phone',
+    description: 'Provide **email** OR **phone** plus password. Returns JWT tokens when verified, or a verification payload when `approvalState` is NOT_VERIFIED.',
   })
   @ApiBody({ type: SignInDto })
-  // DOCUMENTATION: Success Response (Union Type Logic)
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Signin successful. Returns Tokens OR a Verification Object if email is not verified.',
+  @ApiOkResponse({
+    description: 'Sign-in successful',
     schema: {
       oneOf: [
-        {
-          properties: {
-            access_token: { type: 'string' },
-            refresh_token: { type: 'string' }
-          }
-        },
-        {
-          properties: {
-            verificationId: { type: 'string', description: 'User ID needed for OTP' },
-            message: { type: 'string' }
-          }
-        }
-      ]
-    }
+        { $ref: getSchemaPath(TokensDto) },
+        { $ref: getSchemaPath(VerificationRequiredDto) },
+      ],
+    },
   })
-  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation failed (missing email/phone)' })
-  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid Credentials (wrong email or password)' })
-  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Access Denied (User is banned)' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Validation failed' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Invalid credentials' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Resend cooldown or access denied' })
   async signinLocal(@Body() dto: SignInDto) {
     return this.authService.signinLocal(dto);
   }
 
-  //@UseGuards(AuthGuard('jwt')) <-- no need anymore
   @Post('logout')
-  @ApiBody({})
   @AtAuthorizationHeader()
-  @ApiResponse({ status: 200, description: 'Logged out successfully' })
-  @ApiResponse({ status: 401, description: "Unauthorized (expired access_token)" })
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Logout — invalidate refresh token server-side' })
+  @ApiNoContentResponse({ description: 'Logged out successfully' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Missing or invalid access token' })
   logout(@Req() req: LogoutRequest): Promise<void> {
-    // This code ONLY runs if the Access Token is valid and not expired.
-
-    // The data returned by AtStrategy's validate() method is now in req.user
     const user = req.user;
     return this.authService.logout(user['sub']);
   }
 
-  // Refresh Token Endpoint
-  // Note: We use the RT Guard specifically here. 
-  // Because the Global Guard (AtGuard) is running, we usually mark this @Public() 
-  // to bypass the 'jwt' check, and let the 'jwt-refresh' guard handle it.
   @MyPublic()
   @UseGuards(AuthGuard('jwt-refresh'))
-  @Post('/refresh')
-  @ApiOperation({summary:"Get fresh new tokens using the refresh_token",description:"even the refresh token will be refreshed"})
-  @ApiBody({})
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Rotate access and refresh tokens',
+    description: 'Send `Authorization: Bearer <refresh_token>`. Both tokens are rotated; old refresh token is invalidated.',
+  })
   @ApiHeader({
     name: 'Authorization',
-    example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyNGI1ZDJjMy0zZGE1LTRkNmUtOWE0ZS1mMDg4Yzc1NDMzZjIiLCJlbWFpbCI6ImFiZG8uMTYyODg4OEBnbWFpbC5jb20iLCJpYXQiOjE3NjQyMzQ4MTYsImV4cCI6MTc2NDIzNTcxNn0.nqlK50B41j_YRo7rxLn1hI-H3rlL_Ra3I8WvtQ7_Ngo ',
-    description: "Should be like this: 'Bearer refresh_token'",
-    required: false
+    description: 'Bearer refresh_token (not access token)',
+    required: true,
+    example: 'Bearer <refresh_token>',
   })
-  @ApiResponse({ status: 200, description: 'AccessToken was refreshed successfully' })
-  @ApiResponse({ status: 403, description: "User Should be Logged Out. not-exit || expired-RT || banned" })
-  @HttpCode(HttpStatus.OK)
-  refreshTokens(@Req() req: RefreshRequest): Promise<Tokens> {
+  @ApiOkResponse({ type: TokensDto })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Invalid, expired, or revoked refresh token' })
+  refreshTokens(@Req() req: RefreshRequest): Promise<TokensDto> {
     const user = req.user;
     return this.authService.refreshTokens(user.sub, user.refreshToken);
   }
@@ -113,31 +94,44 @@ export class AuthController {
   @MyPublic()
   @Post('verify')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify account with email OTP' })
   @ApiBody({ type: VerifingDto })
-  @ApiResponse({status:200, description:"verified successfully"})
-  @ApiResponse({ status: 403, description: "verification code wrong or expired" })
-  verifyAccount(@Body() dto: VerifingDto): Promise<Tokens> {
+  @ApiOkResponse({ type: TokensDto })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Wrong or expired verification code' })
+  verifyAccount(@Body() dto: VerifingDto): Promise<TokensDto> {
     return this.authService.verifyAccount(dto);
   }
 
   @MyPublic()
   @Post('resend-verification-code')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Resend email verification OTP' })
   @ApiBody({ type: UserIdDto })
-  resendVerificationCode(@Body() dto: UserIdDto) {
-    return this.authService.sendVerificationCode(dto.userId);
+  @ApiNoContentResponse({ description: 'Verification code sent' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'User not found or cooldown active' })
+  async resendVerificationCode(@Body() dto: UserIdDto): Promise<void> {
+    await this.authService.sendVerificationCode(dto.userId);
   }
 
   @MyPublic()
   @Post('request-reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Request password reset OTP (same flow as verification email)' })
   @ApiBody({ type: UserIdDto })
-  requestResetPassword(@Body() dto: UserIdDto) {
-    return this.authService.sendVerificationCode(dto.userId);
+  @ApiNoContentResponse({ description: 'Reset code sent to email' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'User not found or cooldown active' })
+  async requestResetPassword(@Body() dto: UserIdDto): Promise<void> {
+    await this.authService.sendVerificationCode(dto.userId);
   }
 
   @MyPublic()
   @Post('reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Reset password using OTP from email' })
   @ApiBody({ type: ResetPasswordDto })
-  resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto);
+  @ApiNoContentResponse({ description: 'Password updated' })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Invalid code, email mismatch, or user not found' })
+  async resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    await this.authService.resetPassword(dto);
   }
 }

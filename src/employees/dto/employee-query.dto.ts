@@ -360,7 +360,7 @@ export class EmployeeQueryDto {
   @IsOptional() @Type(() => Number) @IsNumber()
   maxRoleStabilityRatio?: number;
   
-  @ApiPropertyOptional({ description: 'Maximum Promotion Stagnation Ratio (Float)' })
+  @ApiPropertyOptional({ description: 'Minimum Promotion Stagnation Ratio (Float)' })
   @IsOptional() @Type(() => Number) @IsNumber()
   minPromotionStagnationRatio?: number;
   

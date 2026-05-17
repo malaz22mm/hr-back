@@ -1,7 +1,31 @@
-import { Controller, Post, Get, Patch, Param, Body, Query, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Param,
+  Body,
+  Query,
+  ParseIntPipe,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiBadRequestResponse,
+  ApiNotFoundResponse,
+  ApiParam,
+  ApiBody,
+  ApiQuery,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { VacationsService } from './vacations.service';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AtAuthorizationHeader } from '../common/decorators/at-authorization.decorator';
+import { CreateVacationRequestDto } from './dto/create-vacation-request.dto';
+import { ProcessVacationRequestDto } from './dto/process-vacation-request.dto';
 
 @ApiTags('Vacations')
 @AtAuthorizationHeader()
@@ -10,36 +34,67 @@ export class VacationsController {
   constructor(private readonly vacationsService: VacationsService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Employee: Submit a new vacation request' })
-  async create(
-    @Body('empId', ParseIntPipe) empId: number,
-    @Body('startDate') startDate: string,
-    @Body('endDate') endDate: string,
-    @Body('reason') reason: string,
-  ) {
-    return this.vacationsService.createRequest(empId, new Date(startDate), new Date(endDate), reason);
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Submit a vacation request',
+    description: 'Creates a pending request (`approval_status: 0`). Validates dates and overlaps.',
+  })
+  @ApiBody({ type: CreateVacationRequestDto })
+  @ApiCreatedResponse({ description: 'Vacation request created' })
+  @ApiBadRequestResponse({ description: 'Invalid dates or overlapping request' })
+  @ApiUnauthorizedResponse()
+  async create(@Body() dto: CreateVacationRequestDto) {
+    return this.vacationsService.createRequest(
+      dto.empId,
+      new Date(dto.startDate),
+      new Date(dto.endDate),
+      dto.reason,
+    );
   }
 
   @Get('employee/:empId')
-  @ApiOperation({ summary: 'Employee: View my request history' })
+  @ApiOperation({ summary: 'List vacation requests for one employee' })
+  @ApiParam({ name: 'empId', type: Number, example: 42 })
+  @ApiOkResponse({ description: 'Requests with status and processor', schema: { type: 'array', items: { type: 'object' } } })
+  @ApiUnauthorizedResponse()
   async getMyRequests(@Param('empId', ParseIntPipe) empId: number) {
     return this.vacationsService.getEmployeeRequests(empId);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Admin: View all company requests (filter by status optional)' })
+  @ApiOperation({
+    summary: 'List all vacation requests (admin)',
+    description: 'Optional filter by approval status ID (0=pending, 1=approved, 2=rejected).',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: Number,
+    description: 'RequestStatus id',
+    example: 0,
+  })
+  @ApiOkResponse({ schema: { type: 'array', items: { type: 'object' } } })
+  @ApiUnauthorizedResponse()
   async getAll(@Query('status') status?: string) {
-    const statusId = status !== undefined ? parseInt(status) : undefined;
+    const statusId = status !== undefined ? parseInt(status, 10) : undefined;
     return this.vacationsService.getAllRequests(statusId);
   }
 
   @Patch(':id/process')
-  @ApiOperation({ summary: 'Admin: Approve or Reject a request' })
+  @ApiOperation({
+    summary: 'Approve or reject a request',
+    description: 'statusId: 1 = approved, 2 = rejected. Sets processed_by and processed_at.',
+  })
+  @ApiParam({ name: 'id', type: Number, example: 10 })
+  @ApiBody({ type: ProcessVacationRequestDto })
+  @ApiOkResponse({ description: 'Updated request with relations' })
+  @ApiBadRequestResponse({ description: 'Invalid statusId' })
+  @ApiNotFoundResponse()
+  @ApiUnauthorizedResponse()
   async process(
     @Param('id', ParseIntPipe) id: number,
-    @Body('adminId') adminId: string, // In real app, get from Auth/JWT
-    @Body('statusId', ParseIntPipe) statusId: number,
+    @Body() dto: ProcessVacationRequestDto,
   ) {
-    return this.vacationsService.processRequest(id, adminId, statusId);
+    return this.vacationsService.processRequest(id, dto.adminId, dto.statusId);
   }
 }

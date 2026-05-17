@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import {  IsString, ValidateIf } from "class-validator";
+import { IsString, MinLength, ValidateIf } from "class-validator";
 
 export class SignInDto{
     @ApiPropertyOptional({
@@ -18,7 +18,8 @@ export class SignInDto{
     @ValidateIf(o=>!o.email)// validate phone only if email is missing
     phone?:string;
 
-    @ApiProperty()
+    @ApiProperty({ minLength: 6, example: 'SecureP@ss123' })
     @IsString()
+    @MinLength(6)
     password:string;
 }

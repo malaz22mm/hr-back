@@ -48,9 +48,22 @@ export async function configureApp(app: INestApplication): Promise<void> {
 
   console.log('[Bootstrap] Initializing Swagger...');
   const config = new DocumentBuilder()
-    .setTitle('Talabaty Backend Documentation')
-    .setDescription("Endpoints' description")
-    .addBearerAuth()
+    .setTitle('Talabaty HR Backend API')
+    .setDescription(
+      'HR analytics, employees, attendance, vacations, and admin auth. ' +
+        'Protected routes require `Authorization: Bearer <access_token>`. ' +
+        'Refresh via POST /auth/refresh with the refresh token in the same header.',
+    )
+    .setVersion('1.0.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Access token from POST /auth/local/signin or /auth/verify',
+      },
+      'bearer',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

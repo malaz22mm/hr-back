@@ -15,6 +15,7 @@ import {
 } from '@nestjs/swagger';
 import { UserRole } from '../../generated/prisma/client';
 import { CreateUserDto } from './dto/create.user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AtAuthorizationHeader } from '../common/decorators/at-authorization.decorator';
@@ -43,8 +44,8 @@ export class UsersController {
     })
     @ApiResponse({
         status: HttpStatus.OK,
-        description: 'The list of users has been successfully retrieved.',
-        // type: [UserResponseDto] // <--- Best Practice: Add your Response DTO here so Swagger generates an example JSON
+        description: 'The list of users has been successfully retrieved. Note: runtime may include hashed fields — filter on client or map to UserResponseDto.',
+        type: [UserResponseDto],
     })
     @ApiResponse({
         status: HttpStatus.INTERNAL_SERVER_ERROR,

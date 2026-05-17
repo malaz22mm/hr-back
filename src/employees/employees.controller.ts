@@ -11,8 +11,6 @@ import {
     HttpStatus,
     HttpCode,
     ParseIntPipe,
-    ParseUUIDPipe,
-    DefaultValuePipe,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -22,7 +20,6 @@ import {
     ApiBody,
     ApiBearerAuth,
     ApiExtraModels,
-    getSchemaPath,
     ApiParam,
     ApiOkResponse,
     ApiCreatedResponse,
@@ -45,13 +42,15 @@ import { UserRole } from '../../generated/prisma/enums';
 import { EmployeeQueryDto } from './dto/employee-query.dto';
 import { CreateEmployeeDto } from './dto/create.employee.dto';
 import { UpdateEmployeeDto } from './dto/update.employee.dto';
-import { EmployeeEntity } from './entities/employee.entity'; // <--- The file we just created
+import { EmployeeEntity } from './entities/employee.entity';
 import { EmployeeStatsDto } from './dto/employee-stats.dto';
+import { PaginatedEmployeesResponseDto } from './dto/paginated-employees.dto';
+import { EmployeeStatsGroupDto } from './dto/employee-stats-response.dto';
 
 @ApiTags('Employees')
 @AtAuthorizationHeader()
 @Controller('employees')
-@ApiExtraModels(EmployeeEntity) // <--- CRITICAL: Registers the Entity class for Swagger schema generation
+@ApiExtraModels(EmployeeEntity, PaginatedEmployeesResponseDto, EmployeeStatsGroupDto)
 export class EmployeesController {
     constructor(private readonly employeesService: EmployeesService) { }
 
@@ -61,25 +60,9 @@ export class EmployeesController {
         description:
             'Retrieve a paginated list of employees with comprehensive filtering capabilities (ranges, enums, exact matches) and sorting.',
     })
-    @ApiResponse({
-        status: HttpStatus.OK,
-        description: 'Returns paginated employee data.',
-        schema: {
-            properties: {
-                data: {
-                    type: 'array',
-                    items: { $ref: getSchemaPath(EmployeeEntity) }, // <--- References the Class correctly
-                },
-                meta: {
-                    type: 'object',
-                    properties: {
-                        total: { type: 'number', example: 50 },
-                        skip: { type: 'number', example: 0 },
-                        take: { type: 'number', example: 10 },
-                    },
-                },
-            },
-        },
+    @ApiOkResponse({
+        description: 'Paginated employee list with relation includes',
+        type: PaginatedEmployeesResponseDto,
     })
     @ApiResponse({
         status: HttpStatus.BAD_REQUEST,
@@ -151,7 +134,7 @@ export class EmployeesController {
         description: 'Restricted to SUPER_ADMIN.',
     })
     @ApiBearerAuth()
-    @ApiParam({ name: 'id', description: 'UUID of the employee' })
+    @ApiParam({ name: 'id', description: 'Employee integer ID', example: 42, type: Number })
     @ApiResponse({
         status: HttpStatus.NO_CONTENT,
         description: 'Employee deleted successfully.',
@@ -164,7 +147,7 @@ export class EmployeesController {
         status: HttpStatus.NOT_FOUND,
         description: 'Employee not found.',
     })
-    async deleteEmployee(@Param('id', ParseUUIDPipe) id: number) {
+    async deleteEmployee(@Param('id', ParseIntPipe) id: number) {
         return this.employeesService.deleteEmployee(id);
     }
 
@@ -174,37 +157,9 @@ export class EmployeesController {
         summary: 'Get employee statistics (Aggregation)',
         description: 'Aggregates employee data by a specific category (e.g., Department, JobRole). Returns counts and averages for key metrics like Monthly Income, Age, and Satisfaction scores.',
     })
-    @ApiQuery({
-        name: 'groupBy',
-        description: 'The field to group data by (e.g. "department", "jobRole", "gender")',
-        required: true,
-        type: String,
-        example: 'department',
-    })
     @ApiOkResponse({
-        description: 'Aggregation results returned successfully.',
-        schema: {
-            example: [
-                {
-                    "department": "Sales",
-                    "_count": { "id": 15 },
-                    "_avg": {
-                        "monthlyIncome": 6500.50,
-                        "age": 34.2,
-                        "jobSatisfaction": 3.5
-                    }
-                },
-                {
-                    "department": "Research & Development",
-                    "_count": { "id": 40 },
-                    "_avg": {
-                        "monthlyIncome": 7200.00,
-                        "age": 38.1,
-                        "jobSatisfaction": 2.9
-                    }
-                }
-            ]
-        }
+        description: 'Aggregation results by lookup ID',
+        type: [EmployeeStatsGroupDto],
     })
     @ApiBadRequestResponse({ description: 'Invalid groupBy field provided.' })
     @ApiInternalServerErrorResponse({ description: 'Internal server error during aggregation.' })
