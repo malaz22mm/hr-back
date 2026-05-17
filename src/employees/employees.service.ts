@@ -114,30 +114,28 @@ export class EmployeesService {
     orderBy.push({ id: 'asc' });
 
     // 5. Execute Database Query with Joins
-    const [data, total] = await Promise.all([
-      this.prisma.employees.findMany({
-        skip,
-        take,
-        where,
-        orderBy,
-        include: {
-          Department: true,
-          JobRole: true,
-          WorkShift: true,
-          MaritalStatus: true,
-          Education: true,
-          BusinessTravel: true,
-          // Satisfaction joins
-          EnvironmentSatisfaction: true,
-          JobInvolvement: true,
-          JobSatisfaction: true,
-          PerformanceRating: true,
-          RelationshipSat: true,
-          WorkLifeBalance: true,
-        },
-      }),
-      this.prisma.employees.count({ where }),
-    ]);
+    const data = await this.prisma.employees.findMany({
+      skip,
+      take,
+      where,
+      orderBy,
+      include: {
+        Department: true,
+        JobRole: true,
+        WorkShift: true,
+        MaritalStatus: true,
+        Education: true,
+        BusinessTravel: true,
+        EnvironmentSatisfaction: true,
+        JobInvolvement: true,
+        JobSatisfaction: true,
+        PerformanceRating: true,
+        RelationshipSat: true,
+        WorkLifeBalance: true,
+      },
+    });
+
+    const total = await this.prisma.employees.count({ where });
 
     return {
       data,
