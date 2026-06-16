@@ -99,6 +99,10 @@ npm run start:dev
 
 `vercel.json` includes `models/**` in serverless function files. Push to GitHub; Vercel redeploys automatically.
 
+**250 MB limit:** `onnxruntime-node` bundles all OS binaries (~254 MB). The `vercel-build` script runs `scripts/prune-onnx-for-vercel.js` on Vercel to keep only `linux/x64` (~38 MB). Do not remove that step.
+
+If the build still fails size checks, set `VERCEL_ANALYZE_BUILD_OUTPUT=1` in Vercel env vars and inspect the build report.
+
 ## Troubleshooting
 
 | Issue | Fix |
