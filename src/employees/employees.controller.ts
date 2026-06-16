@@ -46,13 +46,18 @@ import { EmployeeEntity } from './entities/employee.entity';
 import { EmployeeStatsDto } from './dto/employee-stats.dto';
 import { PaginatedEmployeesResponseDto } from './dto/paginated-employees.dto';
 import { EmployeeStatsGroupDto } from './dto/employee-stats-response.dto';
+import { AttritionPredictionService } from '../ml/attrition-prediction.service';
+import { AttritionPredictionResponseDto } from '../ml/dto/attrition-prediction-response.dto';
 
 @ApiTags('Employees')
 @AtAuthorizationHeader()
 @Controller('employees')
 @ApiExtraModels(EmployeeEntity, PaginatedEmployeesResponseDto, EmployeeStatsGroupDto)
 export class EmployeesController {
-    constructor(private readonly employeesService: EmployeesService) { }
+    constructor(
+        private readonly employeesService: EmployeesService,
+        private readonly attritionPredictionService: AttritionPredictionService,
+    ) { }
 
     @Get()
     @ApiOperation({
@@ -151,6 +156,23 @@ export class EmployeesController {
         return this.employeesService.deleteEmployee(id);
     }
 
+
+    @Get(':id/predictions/attrition')
+    @ApiOperation({
+        summary: 'Predict employee attrition risk',
+        description:
+            'Runs the trained attrition ML model on live employee data. Uses ONNX inference in-process (or Python locally when ML_BACKEND=python).',
+    })
+    @ApiParam({ name: 'id', description: 'Employee integer ID', example: 0, type: Number })
+    @ApiOkResponse({
+        description: 'Attrition prediction result',
+        type: AttritionPredictionResponseDto,
+    })
+    @ApiNotFoundResponse({ description: 'Employee not found' })
+    @ApiInternalServerErrorResponse({ description: 'ML model unavailable' })
+    async predictAttrition(@Param('id', ParseIntPipe) id: number) {
+        return this.attritionPredictionService.predictForEmployee(id);
+    }
 
     @Get('stats')
     @ApiOperation({

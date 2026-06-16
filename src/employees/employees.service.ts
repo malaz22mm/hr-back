@@ -88,7 +88,7 @@ export class EmployeesService {
       training_gap_score: range(minTrainingGapScore, maxTrainingGapScore),
       distance_from_home: range(minDistanceFromHome, maxDistanceFromHome),
       late_arrivals_last_month: range(minLateArrivalsLastMonth, maxLateArrivalsLastMonth),
-      overload_pressure_index: range(minWorkloadPressureIndex, maxWorkloadPressureIndex),
+      workload_pressure_index: range(minWorkloadPressureIndex, maxWorkloadPressureIndex),
       engagement_score: range(minEngagementScore, maxEngagementScore),
       engagement_feedback_score: range(minManagerFeedbackScore, maxManagerFeedbackScore),
       role_stability_ratio: range(minRoleStabilityRatio, maxRoleStabilityRatio),

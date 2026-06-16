@@ -1,78 +1,167 @@
-# Backend Architecture — Talabaty HR API
+# Full Backend Architecture
 
-NestJS 11 + Prisma 7 + PostgreSQL, deployable locally or on **Vercel serverless** (`api/index.ts` → `dist/src/serverless.ts`).
-
-## High-level layout
+## Folder structure (source)
 
 ```
-src/
-├── main.ts              # Local dev entry → configureApp()
-├── serverless.ts        # Vercel Express adapter (cached cold start)
-├── app.config.ts        # ValidationPipe, CORS, Swagger (shared)
-├── app.module.ts        # Global AtGuard (JWT access)
-├── app.controller.ts    # /, /health, swagger redirect
-├── auth/                # Sign-in, refresh, verify, reset
-├── users/               # SUPER_ADMIN user CRUD
-├── employees/           # Core HR dataset + analytics
-├── attendance/          # Punch in/out, presence, history
-├── vacations/           # Requests + admin processing
-├── lookup/              # Reference tables for forms/filters
-└── common/
-    ├── guards/          # AtGuard, RolesGuard
-    ├── decorators/      # @MyPublic, @Roles, @AtAuthorizationHeader
-    └── prisma/          # PrismaService (global)
+hr_back/
+├── api/index.ts              # Vercel entry → dist/src/serverless
+├── prisma/schema.prisma      # Database schema
+├── generated/prisma/         # Generated Prisma client (postinstall)
+├── src/
+│   ├── main.ts               # Local dev only (excluded from Vercel build)
+│   ├── serverless.ts         # Vercel Nest + Express bootstrap
+│   ├── app.module.ts         # Root module + global AtGuard
+│   ├── app.config.ts         # ValidationPipe, CORS, Swagger
+│   ├── app.controller.ts     # /, /health
+│   ├── auth/                 # AuthModule
+│   ├── users/
+│   ├── employees/
+│   ├── attendance/
+│   ├── vacations/
+│   ├── lookup/
+│   └── common/
+│       ├── prisma/           # @Global PrismaModule
+│       ├── guards/
+│       └── decorators/
+├── vercel.json
+├── tsconfig.vercel.json      # Excludes main.ts
+└── swagger-spec.json         # Written at bootstrap
 ```
 
-## Request lifecycle
+## Module architecture
 
-1. **CORS** — Allowed origins: `http://localhost:5173`, `https://hrdashboardai.netlify.app`. OPTIONS returns 204; preflight is not blocked by JWT (public routes + guard skip).
-2. **ValidationPipe** (global) — `whitelist`, `transform`, `forbidNonWhitelisted`.
-3. **AtGuard** (global `APP_GUARD`) — Passport `jwt` strategy unless `@MyPublic()`.
-4. **RolesGuard** (per-controller) — On `UsersController` and write ops on `EmployeesController`; checks `req.user.role` vs `@Roles()`.
+```mermaid
+graph TD
+  AppModule --> ConfigModule
+  AppModule --> PrismaModule
+  AppModule --> AuthModule
+  AppModule --> EmailModule
+  AppModule --> UsersModule
+  AppModule --> EmployeesModule
+  AppModule --> AttendanceModule
+  AppModule --> VacationsModule
+  AppModule --> LookupModule
+  AppModule --> AtGuard[APP_GUARD: AtGuard]
+  UsersModule --> AuthModule
+  AuthModule --> EmailModule
+  EmployeesModule --> PrismaModule
+  AttendanceModule --> PrismaModule
+  VacationsModule --> PrismaModule
+  LookupModule --> PrismaModule
+  UsersModule --> PrismaModule
+  AuthModule --> PrismaModule
+```
 
-## Authentication model
+### Global vs feature modules
 
-| Token | Header | Secret env | TTL (code) |
-|-------|--------|------------|------------|
-| Access | `Authorization: Bearer <access_token>` | `AT_SECRET` | 5 minutes |
-| Refresh | `Authorization: Bearer <refresh_token>` on `POST /auth/refresh` only | `RT_SECRET` | 30 days |
+| Module | `@Global()` | Notes |
+|--------|-------------|--------|
+| `PrismaModule` | Yes | `PrismaService` injectable everywhere |
+| `ConfigModule` | `isGlobal: true` | `ConfigService` for `AT_SECRET`, etc. |
+| Feature modules | No | Import only what they need |
 
-Refresh tokens are **hashed in DB** (`hashedRefreshToken`). Logout clears that hash.
+## Dependency injection (how Nest wires things)
 
-**Public routes:** `AppController`, all `AuthController` endpoints except `logout`.
+1. **Constructor injection:** `@Injectable()` services receive `PrismaService`, `AuthService`, etc.
+2. **Module providers:** `AuthModule` registers `AuthService`, `AtStrategy`, `RtStrategy`.
+3. **APP_GUARD:** `AppModule` registers `AtGuard` for every route unless `@MyPublic()`.
+4. **Exports:** `AuthModule` exports `AuthService` for `UsersModule` password hashing.
 
-## Database (Prisma)
+Example chain for `GET /employees`:
 
-- **Users** — UUID, `UserRole` (ADMIN | SUPER_ADMIN), `ApprState` (VERIFIED | NOT_VERIFIED).
-- **Employees** — Integer `id`, rich HR metrics, FKs to lookup tables.
-- **Vacation_Request** — `approval_status` 0/1/2 (pending/approved/rejected).
-- **Attendance_Logs** — check-in/out per employee + shift.
-- Generated client: `generated/prisma/`.
+```
+EmployeesController → EmployeesService → PrismaService → PrismaClient → PostgreSQL
+```
 
-## Swagger / OpenAPI
+## Controller architecture
 
-| Environment | UI | JSON |
-|-------------|-----|------|
-| Local (`npm run start:dev`) | `/docs` | `/docs-json` |
-| Vercel | `/docs` | `/docs-json` |
+- One controller per feature, `@Controller('employees')` prefix.
+- HTTP verbs map to service methods.
+- Swagger decorators document contract; **runtime** validation is `ValidationPipe` + DTOs.
+- Role checks: `@UseGuards(RolesGuard)` + `@Roles(UserRole.SUPER_ADMIN)` on sensitive routes.
 
-**Do not** mount Swagger under `/api/*` on Vercel — that path is reserved for the serverless function.
+## Service architecture
 
-Static export: `swagger-spec.json` (regenerated on bootstrap).
+- **Business logic** lives in services, not controllers.
+- Services use `PrismaService` (extends `PrismaClient`) for DB access.
+- Nest converts Prisma errors to HTTP exceptions where handled (`P2025` → `NotFoundException`).
 
-## Serverless (Vercel)
+## Prisma architecture
 
-- `vercel.json` rewrites all traffic to `api/index.ts`.
-- Nest app is created once per warm instance (`cachedServer`).
-- `configureApp()` matches local behavior (Swagger at `/docs`, same CORS rules).
+```mermaid
+flowchart LR
+  PS[PrismaService extends PrismaClient]
+  AD[PrismaPg adapter]
+  POOL[pg Pool max:1]
+  PG[(PostgreSQL)]
+  PS --> AD --> POOL --> PG
+```
 
-## Security notes
+- Client generated to `generated/prisma/` with `engineType = "binary"`.
+- Connection config uses **discrete env vars** (`DB_HOST`, `DB_USERNAME`, …), not `DATABASE_URL` in schema (commented out in `schema.prisma`).
+- **Singleton:** `globalForPrisma` reuses one `PrismaService` per Node process (critical for serverless warm instances).
 
-- `GET /users` returns full Prisma `Users` rows (may include `hashedPassword`) — frontend should not display; consider stripping in a future mapper.
-- `PATCH /vacations/:id/process` accepts `adminId` in body instead of JWT `sub` — audit risk.
-- No global `{ success, data }` wrapper — responses are raw JSON (see `COMPLETE_API_REFERENCE.md`).
+## Shared cross-cutting pieces
 
-## Module dependencies
+| Piece | Location | Role |
+|-------|----------|------|
+| `AtGuard` | `common/guards/at.guard.ts` | JWT access on all routes |
+| `RolesGuard` | `common/guards/roles.guard.ts` | Role hierarchy check |
+| `MyPublic` | `common/decorators/public.decorator.ts` | Skip JWT |
+| `Roles` | `common/decorators/roles.decorator.ts` | Required roles metadata |
+| `AtAuthorizationHeader` | Swagger helper | Documents Bearer header |
+| `configureApp` | `app.config.ts` | Pipes, CORS, Swagger |
 
-- `UsersModule` imports `AuthModule` (password hashing).
-- All feature modules import `PrismaModule` (global).
+## Request lifecycle (high level)
+
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant V as Vercel
+  participant E as Express/Nest
+  participant G as AtGuard
+  participant P as ValidationPipe
+  participant Ctrl as Controller
+  participant Svc as Service
+  participant DB as PostgreSQL
+
+  C->>V: HTTP request
+  V->>E: api/index → serverless handler
+  E->>G: canActivate?
+  alt Public route
+    G-->>E: true
+  else Protected
+    G->>G: Passport jwt verify
+    G-->>E: req.user set
+  end
+  E->>P: DTO validation
+  P->>Ctrl: handler
+  Ctrl->>Svc: business method
+  Svc->>DB: Prisma query
+  DB-->>Svc: rows
+  Svc-->>Ctrl: result
+  Ctrl-->>C: JSON response
+```
+
+There is **no custom middleware** file in this project; CORS and validation are applied in `configureApp()`.
+
+## Two runtime entry points
+
+| Entry | File | When |
+|-------|------|------|
+| Local | `main.ts` | `npm run start:dev` → `listen(3000)` |
+| Vercel | `serverless.ts` | All production traffic via rewrite |
+
+Both call **`configureApp(app)`** so behavior matches.
+
+## Design strengths
+
+- Clear module boundaries for teaching and maintenance.
+- Shared bootstrap (`app.config.ts`) avoids serverless/local drift.
+- Global JWT with explicit opt-out (`@MyPublic()`).
+
+## Design limitations
+
+- No repository layer (services call Prisma directly).
+- No unified API response envelope.
+- Serverless + DB pooling requires careful ops (see serverless doc).

@@ -11,6 +11,7 @@ import { EmployeesModule } from './employees/employees.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { VacationsModule } from './vacations/vacations.module';
 import { LookupModule } from './lookup/lookup.module';
+import { MlModule } from './ml/ml.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { LookupModule } from './lookup/lookup.module';
     AttendanceModule,
     VacationsModule,
     LookupModule,
+    MlModule,
   ],
   providers: [
     // This forces the AtGuard to run on EVERY request in the application.

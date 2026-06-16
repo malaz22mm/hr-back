@@ -25,6 +25,7 @@ Base URL (Vercel): your deployment root (no `/api` prefix on routes).
 | POST | `/users` | AT + SUPER_ADMIN | `CreateUserDto` | `string` message | 201 |
 | DELETE | `/users/:id` | AT + SUPER_ADMIN | UUID path | (empty) | 204 |
 | GET | `/employees` | AT | `EmployeeQueryDto` (query) | `{ data, meta }` | 200 |
+| GET | `/employees/:id/predictions/attrition` | AT | integer path `id` | `AttritionPredictionResponseDto` | 200 |
 | POST | `/employees` | AT + SUPER_ADMIN | `CreateEmployeeDto` | Employee record | 201 |
 | PUT | `/employees` | AT + SUPER_ADMIN | `UpdateEmployeeDto` | Employee record | 200 |
 | DELETE | `/employees/:id` | AT + SUPER_ADMIN | **integer** path `id` | (empty) | 204 |
