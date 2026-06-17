@@ -1,0 +1,6 @@
+{
+  "modelVersion": "attrition-xgb-v1",
+  "transformedFeatureCount": null,
+  "exportMethod": "xgboost-json",
+  "treeCount": 200
+}

@@ -161,7 +161,7 @@ export class EmployeesController {
     @ApiOperation({
         summary: 'Predict employee attrition risk',
         description:
-            'Runs the trained attrition ML model on live employee data. Uses ONNX inference in-process (or Python locally when ML_BACKEND=python).',
+            'Runs the trained attrition ML model on live employee data. Uses in-process XGBoost JSON inference (or Python locally when ML_BACKEND=python).',
     })
     @ApiParam({ name: 'id', description: 'Employee integer ID', example: 0, type: Number })
     @ApiOkResponse({

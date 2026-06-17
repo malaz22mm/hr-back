@@ -1,6 +1,6 @@
 # Frontend: Attrition Prediction Integration
 
-The ML model is exposed **only through the NestJS API**. Do not call Python or ONNX from the browser.
+The ML model is exposed **only through the NestJS API**. Do not call Python or ML model files directly from the browser.
 
 ## Endpoint
 

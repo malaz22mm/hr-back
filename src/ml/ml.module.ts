@@ -4,14 +4,14 @@ import { AttritionPredictionService } from './attrition-prediction.service';
 import { FeatureAssemblyService } from './feature-assembly.service';
 import { MlPredictorService } from './ml-predictor.service';
 import { MlPreprocessorService } from './ml-preprocessor.service';
-import { OnnxPredictorService } from './onnx-predictor.service';
 import { PythonPredictorService } from './python-predictor.service';
 import { VacationMetricsService } from './vacation-metrics.service';
+import { XgboostJsonPredictorService } from './xgboost-json-predictor.service';
 
 @Module({
   providers: [
     MlPreprocessorService,
-    OnnxPredictorService,
+    XgboostJsonPredictorService,
     PythonPredictorService,
     MlPredictorService,
     AttendanceMetricsService,

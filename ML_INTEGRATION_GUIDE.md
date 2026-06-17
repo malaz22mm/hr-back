@@ -1,25 +1,26 @@
 # ML Integration Guide
 
-This project runs **attrition prediction** inside the NestJS backend using **ONNX** (no external HTTP ML API).
+This project runs **attrition prediction** inside the NestJS backend using **pure TypeScript** (no external HTTP ML API, no native ML binaries).
 
 ## Architecture
 
 ```
 Frontend  →  NestJS (Vercel)  →  PostgreSQL (features)
                     ↓
-            onnxruntime-node (same process)
+            XGBoost JSON tree traversal (same process)
                     ↓
-            classifier_v1.onnx + preprocessor_config.json
+            classifier.json + preprocessor_config.json
 ```
 
-For **local development**, set `ML_BACKEND=python` to use `data.mining/predict.py` via `child_process` instead of ONNX.
+For **local development**, set `ML_BACKEND=python` to use `data.mining/predict.py` via `child_process` instead of the JS predictor.
 
 ## Model artifacts
 
 | File | Purpose |
 |------|---------|
 | `models/preprocessor_config.json` | Scaler + one-hot parameters (TypeScript preprocessing) |
-| `models/classifier_v1.onnx` | XGBoost classifier |
+| `models/classifier.json` | XGBoost booster (~230 KB, JSON tree format) |
+| `models/classifier.meta.json` | Model version metadata |
 | `data.mining/models/attrition_v1.joblib` | Full Python pipeline (local / retraining) |
 | `data.mining/models/feature_schema.json` | Input column order |
 
@@ -49,7 +50,7 @@ Authorization: Bearer <access_token>
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ML_BACKEND` | `onnx` | `onnx` (Vercel/production) or `python` (local) |
+| `ML_BACKEND` | `js` | `js` (Vercel/production) or `python` (local) |
 | `PYTHON_PATH` | `python` | Python executable when `ML_BACKEND=python` |
 
 ## Column mapping (DB → model)
@@ -73,7 +74,7 @@ Booleans `gender` and `over_time` are sent to the model as `0` / `1`.
 cd data.mining
 pip install -r requirements.txt
 python export_model.py
-python convert_to_onnx.py
+python export_xgboost_json.py
 ```
 
 Then commit updated files under `models/` and `data.mining/models/`.
@@ -81,7 +82,7 @@ Then commit updated files under `models/` and `data.mining/models/`.
 ## Local testing
 
 ```bash
-# Terminal 1 — ONNX (default)
+# Terminal 1 — JS predictor (default)
 npm run start:dev
 
 # Terminal 2 — sign in and call prediction
@@ -99,14 +100,12 @@ npm run start:dev
 
 `vercel.json` includes `models/**` in serverless function files. Push to GitHub; Vercel redeploys automatically.
 
-**250 MB limit:** `onnxruntime-node` bundles all OS binaries (~254 MB). The `vercel-build` script runs `scripts/prune-onnx-for-vercel.js` on Vercel to keep only `linux/x64` (~38 MB). Do not remove that step.
-
-If the build still fails size checks, set `VERCEL_ANALYZE_BUILD_OUTPUT=1` in Vercel env vars and inspect the build report.
+Inference uses only small JSON model files (~230 KB) — no `onnxruntime-node` or other large native binaries, so the function stays well under Vercel’s 250 MB limit.
 
 ## Troubleshooting
 
 | Issue | Fix |
 |-------|-----|
-| `ML model is not loaded` | Ensure `models/classifier_v1.onnx` exists and is deployed |
-| Probability differs from notebook | Re-run `export_model.py` + `convert_to_onnx.py` |
-| Python backend fails on Vercel | Use `ML_BACKEND=onnx` (Python does not run on Vercel) |
+| `ML model is not loaded` | Ensure `models/classifier.json` exists and is deployed |
+| Probability differs from notebook | Re-run `export_model.py` + `export_xgboost_json.py` |
+| Python backend fails on Vercel | Use default `ML_BACKEND=js` (Python does not run on Vercel) |

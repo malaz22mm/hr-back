@@ -8,3 +8,4 @@ skl2onnx>=1.16
 onnx>=1.15
 onnxruntime>=1.17
 onnxmltools>=1.12
+m2cgen>=0.10.0
