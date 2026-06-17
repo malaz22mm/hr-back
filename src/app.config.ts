@@ -9,7 +9,7 @@ const ALLOWED_ORIGINS = new Set([
 
 const SWAGGER_UI_CDN = 'https://unpkg.com/swagger-ui-dist@5.30.2';
 
-function setupVercelSwaggerUi(app: INestApplication): void {
+function setupCdnSwaggerUi(app: INestApplication): void {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,6 +44,7 @@ function setupVercelSwaggerUi(app: INestApplication): void {
 
   const instance = app.getHttpAdapter().getInstance() as Express;
   const serveHtml = (_req: Request, res: Response) => {
+    res.set('Cache-Control', 'no-store');
     res.type('text/html').send(html);
   };
 
@@ -113,24 +114,22 @@ export async function configureApp(app: INestApplication): Promise<void> {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  const isVercel = Boolean(process.env.VERCEL);
 
-  // Must NOT use /api/docs — Vercel reserves /api/* for the api/ serverless folder (404 NOT_FOUND)
+  // Built-in Swagger UI serves static files from node_modules — not bundled on Vercel.
+  // Use CDN assets everywhere; only expose /docs-json from Nest.
   SwaggerModule.setup('docs', app, document, {
     customSiteTitle: 'Talabaty Backend API',
     jsonDocumentUrl: 'docs-json',
-    ui: !isVercel,
-    raw: isVercel ? ['json'] : true,
+    ui: false,
+    raw: ['json'],
   });
 
-  if (isVercel) {
-    setupVercelSwaggerUi(app);
-  }
+  setupCdnSwaggerUi(app);
 
   console.log('[Bootstrap] Swagger UI: /docs');
   console.log('[Bootstrap] OpenAPI JSON: /docs-json');
 
-  if (!isVercel) {
+  if (process.env.NODE_ENV !== 'production') {
     try {
       const fs = await import('fs');
       fs.writeFileSync('swagger-spec.json', JSON.stringify(document));
