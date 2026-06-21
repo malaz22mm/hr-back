@@ -24,6 +24,10 @@ model Users {
   createdAt                  DateTime           @default(now())
   updatedAt                  DateTime           @updatedAt
   processed_vacations        Vacation_Request[]
+
+  // New relation fields
+  employee_id                Int?               @unique 
+  employee                   Employees?         @relation(fields: [employee_id], references: [id])
 }
 
 model Employees {
@@ -89,6 +93,7 @@ model Employees {
   Vacation_Requests      Vacation_Request[]
   Attendance_Logs        Attendance_Logs[]
   WorkShift              WorkShift              @relation(fields: [work_shift_id], references: [id])
+  User                   Users?
 }
 
 model MaritalStatus {
@@ -198,6 +203,7 @@ model Attendance_Logs {
 enum UserRole {
   ADMIN
   SUPER_ADMIN
+  EMPLOYEE
 }
 
 enum ApprState {

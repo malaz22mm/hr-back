@@ -19,6 +19,7 @@ CREATE TABLE "Users" (
     "hashedAccessToken" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "employee_id" INTEGER,
 
     CONSTRAINT "Users_pkey" PRIMARY KEY ("id")
 );
@@ -194,6 +195,12 @@ CREATE UNIQUE INDEX "Users_email_key" ON "Users"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Users_phone_key" ON "Users"("phone");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Users_employee_id_key" ON "Users"("employee_id");
+
+-- AddForeignKey
+ALTER TABLE "Users" ADD CONSTRAINT "Users_employee_id_fkey" FOREIGN KEY ("employee_id") REFERENCES "Employees"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Employees" ADD CONSTRAINT "Employees_marital_status_id_fkey" FOREIGN KEY ("marital_status_id") REFERENCES "MaritalStatus"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

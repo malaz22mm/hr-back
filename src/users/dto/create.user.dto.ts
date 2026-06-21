@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, IsEnum } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsOptional, IsEnum, IsInt } from 'class-validator';
 import { UserRole } from '../../../generated/prisma/enums';
+import { RequiresEmployeeRole } from '../../common/decorators/employee-acount-role-check.decorator';
 
 export class CreateUserDto {
     @ApiProperty({ example: 'John Doe', description: 'Full name of the user' })
@@ -27,4 +28,10 @@ export class CreateUserDto {
     @IsEnum(UserRole)
     @IsOptional()
     role?: UserRole;
+    
+    @ApiProperty({ example: 1, description: 'The id of the employee, if the type of the user account is Employee', required: false })
+    @IsInt()
+    @IsOptional()
+    @RequiresEmployeeRole() // Replaces @x
+    employee_id?: number;
 }

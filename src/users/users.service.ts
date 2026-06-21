@@ -61,6 +61,7 @@ export class UsersService {
                     email: user.email,
                     hashedPassword: passHash,
                     phone: user.phone,
+                    employee_id:user.employee_id, // if the account is an employee's account.
                     role: user.role // This is unsafe, always better to use objects in the prisma client: for example:
                     //role: 'SUPER_ADMIN' <- will work, because it is stored also like this in the db (there is no @map in the schema.prisma) BUT:
                     //role: UserRole.SUPER_ADMIN <- is better, and safe.
