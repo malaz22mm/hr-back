@@ -36,8 +36,9 @@ export class RolesGuard implements CanActivate {
         }
 
         const roleHierarchy: Record<UserRole, number> = {
-            [UserRole.ADMIN]: 1,
-            [UserRole.SUPER_ADMIN]: 2,
+            [UserRole.EMPLOYEE]:1,
+            [UserRole.ADMIN]: 2,
+            [UserRole.SUPER_ADMIN]: 3,
         };
         // If user's role isn't in the list, give them level 0
         const userLevel = roleHierarchy[user.role] || 0;
