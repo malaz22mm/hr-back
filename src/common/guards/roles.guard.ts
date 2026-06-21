@@ -36,7 +36,7 @@ export class RolesGuard implements CanActivate {
         }
 
         const roleHierarchy: Record<UserRole, number> = {
-            [UserRole.EMPLOYEE]:1,
+            [UserRole.EMPLOYEE]:1,//
             [UserRole.ADMIN]: 2,
             [UserRole.SUPER_ADMIN]: 3,
         };
