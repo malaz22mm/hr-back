@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'SUPER_ADMIN');
+CREATE TYPE "UserRole" AS ENUM ('ADMIN', 'SUPER_ADMIN', 'EMPLOYEE');
 
 -- CreateEnum
 CREATE TYPE "ApprState" AS ENUM ('VERIFIED', 'NOT_VERIFIED');
