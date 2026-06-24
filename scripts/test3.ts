@@ -1,36 +1,37 @@
 import { PrismaClient } from '../generated/prisma/client';
-import * as dotenv from 'dotenv';
 import { PrismaPg } from '@prisma/adapter-pg';
+import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-async function main() {
-    const adapter = new PrismaPg({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USERNAME,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_DATABASE,
-        port: Number(process.env.DB_PORT),
-        ssl: {
-            rejectUnauthorized: false,
-        },
-    });
+async function fixUserRoleEnum() {
+  const adapter = new PrismaPg({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE,
+    port: Number(process.env.DB_PORT),
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  });
 
-    const prisma = new PrismaClient({
-        adapter: adapter
-    });
+  const prisma = new PrismaClient({
+    adapter,
+  });
 
-    // 🔥 check enum values directly from PostgreSQL
-    const result = await prisma.$queryRaw`
-        SELECT unnest(enum_range(NULL::"UserRole")) AS role;
-    `;
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TYPE "UserRole"
+      ADD VALUE IF NOT EXISTS 'EMPLOYEE';
+    `);
 
-    console.log("UserRole ENUM values:");
-    console.log(result);
+    console.log('EMPLOYEE role added successfully');
+  } catch (error) {
+    console.error(error);
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
+fixUserRoleEnum();
