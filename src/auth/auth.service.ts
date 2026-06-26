@@ -11,6 +11,7 @@ import { ApprState, UserRole } from '../../generated/prisma/enums';
 import { VerifingDto } from './dto/verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtPayload } from './types/jwtPayload.type';
+import { Prisma } from '../../generated/prisma/client';
 // env.config();
 @Injectable()
 export class AuthService {
@@ -70,6 +71,20 @@ export class AuthService {
         console.log("EMAIL:", dto.email);
 console.log("PHONE:", dto.phone);
 console.log("PASSWORD:", dto.password);
+
+
+console.log('Prisma version:', Prisma.prismaVersion.client);
+
+
+const result = await this.prisma.$queryRawUnsafe(`
+    SELECT enumlabel
+    FROM pg_enum
+    JOIN pg_type ON pg_enum.enumtypid = pg_type.oid
+    WHERE pg_type.typname = 'UserRole'
+    ORDER BY enumsortorder;
+    `);
+    
+    console.log(result);
         try {
 
             user = await this.prisma.users.findUnique({
