@@ -67,6 +67,9 @@ export class AuthService {
         // 1. Find User (Cleaner lookup logic)
         // If email is provided, search by email. If not, search by phone.
         let user;
+        console.log("EMAIL:", dto.email);
+console.log("PHONE:", dto.phone);
+console.log("PASSWORD:", dto.password);
         try {
 
             user = await this.prisma.users.findUnique({
