@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service';
 import bcrypt from 'bcrypt';
 import { Tokens } from './types';
@@ -339,6 +339,42 @@ const result = await this.prisma.$queryRawUnsafe(`
             throw err;
         }
 
+    }
+
+    async getCurrentUser(userId: string) {
+        const user = await this.prisma.users.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                role: true,
+                approvalState: true,
+                employee: {
+                    include: {
+                        Department: true,
+                        JobRole: true,
+                        WorkShift: true,
+                        MaritalStatus: true,
+                        Education: true,
+                        BusinessTravel: true,
+                        EnvironmentSatisfaction: true,
+                        JobInvolvement: true,
+                        JobSatisfaction: true,
+                        PerformanceRating: true,
+                        RelationshipSat: true,
+                        WorkLifeBalance: true,
+                    },
+                },
+            },
+        });
+
+        if (!user) {
+            throw new NotFoundException('Authenticated user not found.');
+        }
+
+        return user;
     }
 
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBody,
   ApiExtraModels,
@@ -22,9 +22,10 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MyPublic } from '../common/decorators/public.decorator';
 import { TokensDto, VerificationRequiredDto } from '../common/dto/tokens.dto';
 
-interface LogoutRequest extends Request {
+interface AuthRequest extends Request {
   user: JwtPayload;
 }
+interface LogoutRequest extends AuthRequest {}
 interface RefreshRequest extends Request {
   user: jwtPayloadWithRt;
 }
@@ -57,6 +58,20 @@ export class AuthController {
   @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Resend cooldown or access denied' })
   async signinLocal(@Body() dto: SignInDto) {
     return this.authService.signinLocal(dto);
+  }
+
+  @Get('me')
+  @AtAuthorizationHeader()
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description: 'Returns the signed-in user information and linked employee record if available.',
+  })
+  @ApiOkResponse({ description: 'Current authenticated user profile' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Missing or invalid access token' })
+  async getCurrentUser(@Req() req: AuthRequest) {
+    const user = req.user;
+    return this.authService.getCurrentUser(user.sub);
   }
 
   @Post('logout')
