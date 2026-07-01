@@ -18,7 +18,12 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from xgboost import XGBClassifier
 
 ROOT = Path(__file__).resolve().parent
-DATA_PATH = ROOT / "employees_ml.csv"
+DATASET_DIR = ROOT / "datasets"
+DATA_PATH = DATASET_DIR / "Employees_Dataset_Final_With_Shifts.csv"
+if not DATA_PATH.exists():
+    DATA_PATH = DATASET_DIR / "Employees_Dataset_With_Synthetic_Health.csv"
+if not DATA_PATH.exists():
+    DATA_PATH = ROOT / "employees_ml.csv"
 MODELS_DIR = ROOT / "models"
 JOBLIB_PATH = MODELS_DIR / "attrition_v1.joblib"
 SCHEMA_PATH = MODELS_DIR / "feature_schema.json"
@@ -36,6 +41,7 @@ CATEGORICAL_COLS = [
     "relationship_satisfaction_id",
     "work_life_balance_id",
     "work_shift_id",
+    "health_state_id",
 ]
 
 COLS_TO_DROP = ["id", "name", "name_code", "attrition_risk_class_id"]
@@ -44,6 +50,10 @@ COLS_TO_DROP = ["id", "name", "name_code", "attrition_risk_class_id"]
 def load_training_frame(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path)
     df = df.drop(columns=[c for c in COLS_TO_DROP if c in df.columns])
+    if "health_status" in df.columns:
+        df["health_status"] = pd.factorize(df["health_status"])[0].astype(int)
+    if "health_state_id" in df.columns:
+        df["health_state_id"] = df["health_state_id"].astype(int)
     for col in df.select_dtypes(include=["bool"]).columns:
         df[col] = df[col].astype(int)
     return df

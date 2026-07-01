@@ -26,17 +26,18 @@ model Users {
   processed_vacations        Vacation_Request[]
 
   // New relation fields
-  employee_id                Int?               @unique 
-  employee                   Employees?         @relation(fields: [employee_id], references: [id])
+  employee_id Int?       @unique
+  employee    Employees? @relation(fields: [employee_id], references: [id])
 }
 
 model Employees {
-  id                           Int                @id @default(autoincrement())
+  id                           Int     @id @default(autoincrement())
   name                         String
   name_code                    String
   attrition                    Boolean
   age                          Int
   gender                       Boolean // true for men
+  health_status                String?
   distance_from_home           Int
   hourly_rate                  Int
   daily_rate                   Int
@@ -63,37 +64,39 @@ model Employees {
   role_stability_ratio         Float
 
   // Foreign Keys
-  marital_status_id          Int
-  job_role_id                Int
-  business_travel_id         Int
-  department_id              Int
-  education_id               Int
-  performance_rating_id      Int
-  attrition_risk_class_id    Int
-  environment_satisfaction_id Int
-  job_involvement_id         Int
-  job_satisfaction_id        Int
+  marital_status_id            Int
+  health_state_id              Int
+  job_role_id                  Int
+  business_travel_id           Int
+  department_id                Int
+  education_id                 Int
+  performance_rating_id        Int
+  attrition_risk_class_id      Int
+  environment_satisfaction_id  Int
+  job_involvement_id           Int
+  job_satisfaction_id          Int
   relationship_satisfaction_id Int
-  work_life_balance_id       Int
+  work_life_balance_id         Int
   work_shift_id                Int
 
   // Relations
-  MaritalStatus          MaritalStatus          @relation(fields: [marital_status_id], references: [id])
-  JobRole                JobRoleType            @relation(fields: [job_role_id], references: [id])
-  BusinessTravel         BusinessTravel         @relation(fields: [business_travel_id], references: [id])
-  Department             DepartmentType         @relation(fields: [department_id], references: [id])
-  Education              Education              @relation(fields: [education_id], references: [id])
-  PerformanceRating      PerformanceRating      @relation(fields: [performance_rating_id], references: [id])
-  AttritionRiskClass     AttritionRiskClass     @relation(fields: [attrition_risk_class_id], references: [id])
-  EnvironmentSatisfaction Satisfaction           @relation("EnvSat", fields: [environment_satisfaction_id], references: [id])
-  JobInvolvement         Satisfaction           @relation("JobInv", fields: [job_involvement_id], references: [id])
-  JobSatisfaction        Satisfaction           @relation("JobSat", fields: [job_satisfaction_id], references: [id])
-  RelationshipSat        Satisfaction           @relation("RelSat", fields: [relationship_satisfaction_id], references: [id])
-  WorkLifeBalance        Satisfaction           @relation("WLB", fields: [work_life_balance_id], references: [id])
-  Vacation_Requests      Vacation_Request[]
-  Attendance_Logs        Attendance_Logs[]
-  WorkShift              WorkShift              @relation(fields: [work_shift_id], references: [id])
-  User                   Users?
+  MaritalStatus           MaritalStatus      @relation(fields: [marital_status_id], references: [id])
+  HealthState             HealthState        @relation(fields: [health_state_id], references: [id])
+  JobRole                 JobRoleType        @relation(fields: [job_role_id], references: [id])
+  BusinessTravel          BusinessTravel     @relation(fields: [business_travel_id], references: [id])
+  Department              DepartmentType     @relation(fields: [department_id], references: [id])
+  Education               Education          @relation(fields: [education_id], references: [id])
+  PerformanceRating       PerformanceRating  @relation(fields: [performance_rating_id], references: [id])
+  AttritionRiskClass      AttritionRiskClass @relation(fields: [attrition_risk_class_id], references: [id])
+  EnvironmentSatisfaction Satisfaction       @relation("EnvSat", fields: [environment_satisfaction_id], references: [id])
+  JobInvolvement          Satisfaction       @relation("JobInv", fields: [job_involvement_id], references: [id])
+  JobSatisfaction         Satisfaction       @relation("JobSat", fields: [job_satisfaction_id], references: [id])
+  RelationshipSat         Satisfaction       @relation("RelSat", fields: [relationship_satisfaction_id], references: [id])
+  WorkLifeBalance         Satisfaction       @relation("WLB", fields: [work_life_balance_id], references: [id])
+  Vacation_Requests       Vacation_Request[]
+  Attendance_Logs         Attendance_Logs[]
+  WorkShift               WorkShift          @relation(fields: [work_shift_id], references: [id])
+  User                    Users?
 }
 
 model MaritalStatus {
@@ -117,6 +120,13 @@ model DepartmentType {
   Employees Employees[]
 }
 
+model HealthState {
+  id        Int         @id
+  name      String
+  name_code String
+  Employees Employees[]
+}
+
 model Education {
   id        Int         @id
   name      String
@@ -125,10 +135,10 @@ model Education {
 }
 
 model Satisfaction {
-  id        Int         @id
+  id        Int    @id
   name      String
   name_code String
-  
+
   EnvSatEmployees Employees[] @relation("EnvSat")
   JobInvEmployees Employees[] @relation("JobInv")
   JobSatEmployees Employees[] @relation("JobSat")
@@ -164,18 +174,18 @@ model RequestStatus {
 }
 
 model Vacation_Request {
-  id              Int           @id @default(autoincrement())
+  id              Int       @id @default(autoincrement())
   emp_id          Int
   processed_by    String?
   processed_at    DateTime?
-  requested_at    DateTime      @default(now())
-  start_date      DateTime      @db.Date
-  end_date        DateTime      @db.Date
+  requested_at    DateTime  @default(now())
+  start_date      DateTime  @db.Date
+  end_date        DateTime  @db.Date
   reason          String
   approval_status Int
 
   Employee      Employees     @relation(fields: [emp_id], references: [id])
-  Processor     Users?         @relation(fields: [processed_by], references: [id])
+  Processor     Users?        @relation(fields: [processed_by], references: [id])
   RequestStatus RequestStatus @relation(fields: [approval_status], references: [id])
 }
 

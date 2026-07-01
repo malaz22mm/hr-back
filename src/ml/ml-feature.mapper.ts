@@ -21,6 +21,7 @@ export function toMlAttritionFeatures(
     monthly_income: employee.monthly_income,
     percent_salary_hike: employee.percent_salary_hike,
     job_level: employee.job_level,
+    health_state_id: employee.health_state_id,
     job_role_id: employee.job_role_id,
     business_travel_id: employee.business_travel_id,
     department_id: employee.department_id,

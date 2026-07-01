@@ -22,6 +22,13 @@ export class EmployeeEntity {
   @ApiProperty({ example: true, description: 'true for men' })
   gender: boolean;
 
+  @ApiProperty({
+    example: 'Healthy',
+    description: 'Optional employee health status',
+    nullable: true,
+  })
+  health_status: string | null;
+
   @ApiProperty({ example: 5, description: 'Distance from home in km' })
   distance_from_home: number;
 
@@ -43,7 +50,10 @@ export class EmployeeEntity {
   @ApiProperty({ example: 2, description: 'Job level (1-5)' })
   job_level: number;
 
-  @ApiProperty({ example: 3, description: 'Number of companies worked at previously' })
+  @ApiProperty({
+    example: 3,
+    description: 'Number of companies worked at previously',
+  })
   num_of_companies_worked: number;
 
   @ApiProperty({ example: 10, description: 'Total working years' })

@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Employees, Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../common/prisma/prisma.service';
 import { UpdateEmployeeDto } from './dto/update.employee.dto';
@@ -7,8 +12,6 @@ import { EmployeeQueryDto } from './dto/employee-query.dto';
 import { EmployeeStatsDto } from './dto/employee-stats.dto';
 // import { AttritionRiskClassMap, AttritionTypeMap, BusinessTravelTypeMap, DepartmentTypeMap, EducationFieldTypeMap, EducationLevelMap, JobRoleTypeMap, mapEnumValue, OvertimeTypeMap, PerformanceRatingMap } from './mappers/enum-mapper';
 
-
-
 // I discovered that the try-catch around prisma is not needed:
 //         Prisma throws an exception (promise rejection)
 // NestJS automatically catches it at the framework level
@@ -16,32 +19,80 @@ import { EmployeeStatsDto } from './dto/employee-stats.dto';
 // You should use try/catch only if you translate or enrich the error.
 @Injectable()
 export class EmployeesService {
-  constructor(private readonly prisma: PrismaService) { }
-
+  constructor(private readonly prisma: PrismaService) {}
 
   async findAll(params: EmployeeQueryDto) {
     const {
-      skip = 0 // Default to 0 if undefined
-      , take = 10 // Default to 10 if undefined
-      , sortBy, sortOrder,
+      skip = 0, // Default to 0 if undefined
+      take = 10, // Default to 10 if undefined
+      sortBy,
+      sortOrder,
       // Range Filters
-      minAge, maxAge, minJobLevel, maxJobLevel, minMonthlyIncome, maxMonthlyIncome,
-      minPercentSalaryHike, maxPercentSalaryHike, minTotalWorkingYears, maxTotalWorkingYears,
-      minNumCompaniesWorked, maxNumCompaniesWorked, minYearsAtCompany, maxYearsAtCompany,
-      minYearsInCurrentRole, maxYearsInCurrentRole, minYearsSinceLastPromotion, maxYearsSinceLastPromotion,
-      minYearsWithCurrManager, maxYearsWithCurrManager, minTrainingTimesLastYear, maxTrainingTimesLastYear,
-      minTrainingHoursLastYear, maxTrainingHoursLastYear, minTrainingHoursLast6Months, maxTrainingHoursLast6Months,
-      minTrainingGapScore, maxTrainingGapScore, minDistanceFromHome, maxDistanceFromHome,
-      minAbsenceRatio, maxAbsenceRatio, minLateArrivalsLastMonth, maxLateArrivalsLastMonth,
-      minOvertimeHoursLastMonth, maxOvertimeHoursLastMonth, minWorkloadPressureIndex, maxWorkloadPressureIndex,
-      minEngagementScore, maxEngagementScore, minManagerFeedbackScore, maxManagerFeedbackScore,
-      minRoleStabilityRatio, maxRoleStabilityRatio, minPromotionStagnationRatio, maxPromotionStagnationRatio,
+      minAge,
+      maxAge,
+      minJobLevel,
+      maxJobLevel,
+      minMonthlyIncome,
+      maxMonthlyIncome,
+      minPercentSalaryHike,
+      maxPercentSalaryHike,
+      minTotalWorkingYears,
+      maxTotalWorkingYears,
+      minNumCompaniesWorked,
+      maxNumCompaniesWorked,
+      minYearsAtCompany,
+      maxYearsAtCompany,
+      minYearsInCurrentRole,
+      maxYearsInCurrentRole,
+      minYearsSinceLastPromotion,
+      maxYearsSinceLastPromotion,
+      minYearsWithCurrManager,
+      maxYearsWithCurrManager,
+      minTrainingTimesLastYear,
+      maxTrainingTimesLastYear,
+      minTrainingHoursLastYear,
+      maxTrainingHoursLastYear,
+      minTrainingHoursLast6Months,
+      maxTrainingHoursLast6Months,
+      minTrainingGapScore,
+      maxTrainingGapScore,
+      minDistanceFromHome,
+      maxDistanceFromHome,
+      minAbsenceRatio,
+      maxAbsenceRatio,
+      minLateArrivalsLastMonth,
+      maxLateArrivalsLastMonth,
+      minOvertimeHoursLastMonth,
+      maxOvertimeHoursLastMonth,
+      minWorkloadPressureIndex,
+      maxWorkloadPressureIndex,
+      minEngagementScore,
+      maxEngagementScore,
+      minManagerFeedbackScore,
+      maxManagerFeedbackScore,
+      minRoleStabilityRatio,
+      maxRoleStabilityRatio,
+      minPromotionStagnationRatio,
+      maxPromotionStagnationRatio,
       // Destructure ID Filters (Categorical)
-      attrition, businessTravelId, departmentId, educationId, jobRoleId,
-      maritalStatusId, attritionRiskClassId, workShiftId, gender, overTime,
+      attrition,
+      businessTravelId,
+      departmentId,
+      educationId,
+      jobRoleId,
+      maritalStatusId,
+      attritionRiskClassId,
+      workShiftId,
+      gender,
+      overTime,
+      healthStatus,
       // Destructure Rating IDs (Satisfaction)
-      environmentSatisfactionId, jobInvolvementId, jobSatisfactionId,
-      performanceRatingId, relationshipSatisfactionId, workLifeBalanceId,
+      environmentSatisfactionId,
+      jobInvolvementId,
+      jobSatisfactionId,
+      performanceRatingId,
+      relationshipSatisfactionId,
+      workLifeBalanceId,
     } = params;
 
     // Helper for numeric ranges
@@ -53,6 +104,7 @@ export class EmployeesService {
     const idFilters = {
       attrition,
       gender,
+      health_status: healthStatus,
       over_time: overTime,
       business_travel_id: businessTravelId,
       department_id: departmentId,
@@ -77,27 +129,59 @@ export class EmployeesService {
       monthly_income: range(minMonthlyIncome, maxMonthlyIncome),
       percent_salary_hike: range(minPercentSalaryHike, maxPercentSalaryHike),
       total_working_years: range(minTotalWorkingYears, maxTotalWorkingYears),
-      num_of_companies_worked: range(minNumCompaniesWorked, maxNumCompaniesWorked),
+      num_of_companies_worked: range(
+        minNumCompaniesWorked,
+        maxNumCompaniesWorked,
+      ),
       years_at_company: range(minYearsAtCompany, maxYearsAtCompany),
-      years_in_current_role: range(minYearsInCurrentRole, maxYearsInCurrentRole),
-      years_since_last_promotion: range(minYearsSinceLastPromotion, maxYearsSinceLastPromotion),
-      years_with_curr_manager: range(minYearsWithCurrManager, maxYearsWithCurrManager),
-      training_times_last_year: range(minTrainingTimesLastYear, maxTrainingTimesLastYear),
-      training_hours_last_year: range(minTrainingHoursLastYear, maxTrainingHoursLastYear),
-      training_hours_last_6_months: range(minTrainingHoursLast6Months, maxTrainingHoursLast6Months),
+      years_in_current_role: range(
+        minYearsInCurrentRole,
+        maxYearsInCurrentRole,
+      ),
+      years_since_last_promotion: range(
+        minYearsSinceLastPromotion,
+        maxYearsSinceLastPromotion,
+      ),
+      years_with_curr_manager: range(
+        minYearsWithCurrManager,
+        maxYearsWithCurrManager,
+      ),
+      training_times_last_year: range(
+        minTrainingTimesLastYear,
+        maxTrainingTimesLastYear,
+      ),
+      training_hours_last_year: range(
+        minTrainingHoursLastYear,
+        maxTrainingHoursLastYear,
+      ),
+      training_hours_last_6_months: range(
+        minTrainingHoursLast6Months,
+        maxTrainingHoursLast6Months,
+      ),
       training_gap_score: range(minTrainingGapScore, maxTrainingGapScore),
       distance_from_home: range(minDistanceFromHome, maxDistanceFromHome),
-      late_arrivals_last_month: range(minLateArrivalsLastMonth, maxLateArrivalsLastMonth),
-      workload_pressure_index: range(minWorkloadPressureIndex, maxWorkloadPressureIndex),
+      late_arrivals_last_month: range(
+        minLateArrivalsLastMonth,
+        maxLateArrivalsLastMonth,
+      ),
+      workload_pressure_index: range(
+        minWorkloadPressureIndex,
+        maxWorkloadPressureIndex,
+      ),
       engagement_score: range(minEngagementScore, maxEngagementScore),
-      engagement_feedback_score: range(minManagerFeedbackScore, maxManagerFeedbackScore),
+      engagement_feedback_score: range(
+        minManagerFeedbackScore,
+        maxManagerFeedbackScore,
+      ),
       role_stability_ratio: range(minRoleStabilityRatio, maxRoleStabilityRatio),
-      promotion_stagnation_ratio: range(minPromotionStagnationRatio, maxPromotionStagnationRatio),
+      promotion_stagnation_ratio: range(
+        minPromotionStagnationRatio,
+        maxPromotionStagnationRatio,
+      ),
     };
     // 3. Merge and Cleanup undefined filters
     const where: Prisma.EmployeesWhereInput = {};
     const allFilters = { ...idFilters, ...numericFilters };
-
 
     for (const key in allFilters) {
       const value = allFilters[key as keyof typeof allFilters];
@@ -143,30 +227,32 @@ export class EmployeesService {
         total,
         skip,
         take,
-        pages: Math.ceil(total / take)
-      }
+        pages: Math.ceil(total / take),
+      },
     };
   }
-
 
   async createEmployee(newEmp: CreateEmployeeDto) {
     try {
       return await this.prisma.employees.create({
         data: {
-          ...newEmp, // Only if keys match schema exactly
+          ...newEmp,
+          health_state_id: (newEmp as any).health_state_id ?? 0,
           // Example if keys differ:
-          // department_id: newEmp.departmentId, 
+          // department_id: newEmp.departmentId,
           // job_role_id: newEmp.jobRoleId,
         },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
         throw new BadRequestException('Employee already exists.');
       }
       throw error;
     }
   }
-
 
   async updateEmployee(params: UpdateEmployeeDto) {
     const { id, ...data } = params;
@@ -176,6 +262,7 @@ export class EmployeesService {
         where: { id: Number(id) }, // Explicit cast to Int for schema compliance
         data: {
           ...data,
+          health_state_id: (data as any).health_state_id ?? 0,
           // If your DTO doesn't match schema snake_case exactly, map them here:
           // department_id: data.departmentId,
           // work_shift_id: data.workShiftId,
@@ -192,9 +279,7 @@ export class EmployeesService {
     }
   }
 
-
   async deleteEmployee(id: number): Promise<void> {
-
     // Enhancement:
     // The "Soft Delete" (Recommended for HR Systems)
     // Instead of removing the record, you add a deletedAt timestamp to the Employees model.
@@ -213,13 +298,14 @@ export class EmployeesService {
           throw new NotFoundException(`Employee with ID ${id} not found`);
         }
         if (error.code === 'P2003') {
-          throw new BadRequestException(`Cannot delete employee due to existing related data.`);
+          throw new BadRequestException(
+            `Cannot delete employee due to existing related data.`,
+          );
         }
       }
       throw error;
     }
   }
-
 
   async getStats(params: EmployeeStatsDto) {
     const { groupBy } = params; // e.g., 'department_id'
@@ -248,9 +334,15 @@ export class EmployeesService {
         count: group._count.id,
         averageSalary: Math.round(group._avg.monthly_income || 0),
         averageAge: Math.round(group._avg.age || 0),
-        averageTenure: parseFloat((group._avg.years_at_company || 0).toFixed(1)),
-        avgEngagement: parseFloat((group._avg.engagement_score || 0).toFixed(1)),
-        avgWorkload: parseFloat((group._avg.workload_pressure_index || 0).toFixed(1)),
+        averageTenure: parseFloat(
+          (group._avg.years_at_company || 0).toFixed(1),
+        ),
+        avgEngagement: parseFloat(
+          (group._avg.engagement_score || 0).toFixed(1),
+        ),
+        avgWorkload: parseFloat(
+          (group._avg.workload_pressure_index || 0).toFixed(1),
+        ),
       };
     });
   }

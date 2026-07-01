@@ -4,6 +4,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
 } from 'class-validator';
 
@@ -32,6 +33,16 @@ export class BaseEmployeeDto {
   @IsBoolean()
   @IsNotEmpty()
   gender: boolean;
+
+  @ApiProperty({
+    example: 'Healthy',
+    description: 'Optional employee health status',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  health_status?: string | null;
 
   @ApiProperty({ example: 12 })
   @IsInt()
