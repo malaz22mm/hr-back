@@ -4,7 +4,6 @@ import {
   IsInt,
   IsNotEmpty,
   IsNumber,
-  IsOptional,
   IsString,
 } from 'class-validator';
 
@@ -33,16 +32,6 @@ export class BaseEmployeeDto {
   @IsBoolean()
   @IsNotEmpty()
   gender: boolean;
-
-  @ApiProperty({
-    example: 'Healthy',
-    description: 'Optional employee health status',
-    required: false,
-    nullable: true,
-  })
-  @IsOptional()
-  @IsString()
-  health_status?: string | null;
 
   @ApiProperty({ example: 12 })
   @IsInt()
@@ -165,6 +154,11 @@ export class BaseEmployeeDto {
   role_stability_ratio: number;
 
   // Foreign Key IDs (Lookup Table references)
+  @ApiProperty({ example: 1, description: 'ID from HealthStatus table' })
+  @IsInt()
+  @IsNotEmpty()
+  health_state_id: number;
+
   @ApiProperty({ example: 1, description: 'ID from MaritalStatus table' })
   @IsInt()
   @IsNotEmpty()

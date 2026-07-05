@@ -37,7 +37,6 @@ model Employees {
   attrition                    Boolean
   age                          Int
   gender                       Boolean // true for men
-  health_status                String?
   distance_from_home           Int
   hourly_rate                  Int
   daily_rate                   Int

@@ -43,7 +43,8 @@
     "absence_days_last_month",
     "absence_ratio",
     "work_shift_id",
-    "health_state_id"
+    "accepted_vacations",
+    "rejected_vacations"
   ],
   "categoricalColumns": [
     "marital_status_id",
@@ -57,8 +58,7 @@
     "performance_rating_id",
     "relationship_satisfaction_id",
     "work_life_balance_id",
-    "work_shift_id",
-    "health_state_id"
+    "work_shift_id"
   ],
   "numericalColumns": [
     "age",
@@ -90,12 +90,14 @@
     "over_time_hours_last_month",
     "late_arrivals_last_month",
     "absence_days_last_month",
-    "absence_ratio"
+    "absence_ratio",
+    "accepted_vacations",
+    "rejected_vacations"
   ],
   "targetColumn": "attrition",
   "bestParams": {
-    "classifier__learning_rate": 0.1,
-    "classifier__max_depth": 5,
+    "classifier__learning_rate": 0.05,
+    "classifier__max_depth": 3,
     "classifier__n_estimators": 200
   }
 }

@@ -9,6 +9,7 @@ export enum GroupByField {
   DEPARTMENT = 'department_id',
   JOB_ROLE = 'job_role_id',
   EDUCATION = 'education_id',
+  HEALTH_STATE = 'health_state_id',
   MARITAL_STATUS = 'marital_status_id',
   BUSINESS_TRAVEL = 'business_travel_id',
   WORK_SHIFT = 'work_shift_id',
