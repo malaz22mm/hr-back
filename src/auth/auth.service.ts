@@ -365,6 +365,7 @@ const result = await this.prisma.$queryRawUnsafe(`
                         PerformanceRating: true,
                         RelationshipSat: true,
                         WorkLifeBalance: true,
+                        HealthState: true,
                     },
                 },
             },
