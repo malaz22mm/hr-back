@@ -94,6 +94,8 @@ export class EmployeesService {
       engagement_feedback_score: range(minManagerFeedbackScore, maxManagerFeedbackScore),
       role_stability_ratio: range(minRoleStabilityRatio, maxRoleStabilityRatio),
       promotion_stagnation_ratio: range(minPromotionStagnationRatio, maxPromotionStagnationRatio),
+      absence_ratio: range(minAbsenceRatio, maxAbsenceRatio),
+      overtime_hours_last_month: range(minOvertimeHoursLastMonth, maxOvertimeHoursLastMonth),
     };
     // 3. Merge and Cleanup undefined filters
     const where: Prisma.EmployeesWhereInput = {};
@@ -114,8 +116,9 @@ export class EmployeesService {
     }
     orderBy.push({ id: 'asc' });
 
-    // 5. Execute Database Query with Joins
-    const data = await this.prisma.employees.findMany({
+   // 5. Execute Database Query with Joins
+    // (قم بتغيير اسم المتغير هنا إلى rawData)
+    const rawData = await this.prisma.employees.findMany({
       skip,
       take,
       where,
@@ -133,8 +136,97 @@ export class EmployeesService {
         PerformanceRating: true,
         RelationshipSat: true,
         WorkLifeBalance: true,
-        HealthState:true
+        HealthState: true
       },
+    });
+// 6. 🚀 إثراء البيانات (Data Enrichment) - حساب الحضور والانصراف الحقيقي
+    
+    // أ. تحديد التواريخ (قبل شهر وقبل 3 أشهر من اليوم)
+    const now = new Date();
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(now.getMonth() - 1);
+    
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(now.getMonth() - 3);
+
+    // ب. جلب جميع سجلات الحضور للموظفين في هذه الصفحة لآخر 3 أشهر دفعة واحدة
+    const employeeIds = rawData.map(e => e.id);
+    const attendanceLogs = await this.prisma.attendance_Logs.findMany({
+      where: {
+        emp_id: { in: employeeIds },
+        check_in: { gte: threeMonthsAgo }
+      },
+      include: { WorkShift: true } // نحتاج الشفت لمعرفة وقت البداية والنهاية وفترة السماح
+    });
+
+    // ج. المرور على الموظفين وحساب الـ Metrics لكل موظف
+    const data = rawData.map(emp => {
+      // فلترة السجلات الخاصة بهذا الموظف فقط
+      const empLogs = attendanceLogs.filter(log => log.emp_id === emp.id);
+      
+      let lateArrivalsLastMonth = 0;
+      let overtimeHoursLastMonth = 0;
+      
+      // نستخدم Set لحساب الأيام الفريدة (لمنع حساب اليوم مرتين إذا بصم الموظف مرتين بالخطأ)
+      let attendedDaysLastMonth = new Set();
+      let attendedDaysLast3Months = new Set();
+
+      empLogs.forEach(log => {
+        const checkInDate = log.check_in;
+        const isLastMonth = checkInDate >= oneMonthAgo;
+        
+        // تحويل التاريخ لنص (YYYY-MM-DD) لعد الأيام الفريدة
+        const dateString = checkInDate.toISOString().split('T')[0];
+        attendedDaysLast3Months.add(dateString);
+        
+        if (isLastMonth) {
+          attendedDaysLastMonth.add(dateString);
+          
+          const shift = log.WorkShift;
+          if (shift) {
+            // --- 1. حساب التأخير (Late Arrivals) ---
+            // نستخرج الدقائق والساعات فقط لمقارنة الوقت بغض النظر عن تاريخ اليوم
+            const shiftStartMins = shift.start_time.getUTCHours() * 60 + shift.start_time.getUTCMinutes();
+            const checkInMins = checkInDate.getUTCHours() * 60 + checkInDate.getUTCMinutes();
+            
+            // إذا كان وقت الدخول أكبر من وقت بداية الشفت + فترة السماح = متأخر
+            if (checkInMins > (shiftStartMins + shift.grace_period_minutes)) {
+              lateArrivalsLastMonth++;
+            }
+
+            // --- 2. حساب الوقت الإضافي (Overtime) ---
+            if (log.check_out) {
+              // حساب مدة الشفت الرسمية بالساعات
+              const shiftDurationHours = (shift.end_time.getTime() - shift.start_time.getTime()) / (1000 * 60 * 60);
+              // حساب المدة الفعلية التي قضاها الموظف بالساعات
+              const actualWorkedHours = (log.check_out.getTime() - checkInDate.getTime()) / (1000 * 60 * 60);
+              
+              if (actualWorkedHours > shiftDurationHours) {
+                overtimeHoursLastMonth += (actualWorkedHours - shiftDurationHours);
+              }
+            }
+          }
+        }
+      });
+
+      // --- 3. حساب أيام الغياب (Absence Days) ---
+      // افتراض أن أيام العمل الرسمية هي 22 يوم في الشهر و 66 يوم في 3 أشهر (باعتبار عطلة نهاية الأسبوع)
+      const EXPECTED_DAYS_MONTH = 22;
+      const EXPECTED_DAYS_3_MONTHS = 66;
+
+      const absenceDaysLastMonth = Math.max(0, EXPECTED_DAYS_MONTH - attendedDaysLastMonth.size);
+      const absenceDaysLast3Months = Math.max(0, EXPECTED_DAYS_3_MONTHS - attendedDaysLast3Months.size);
+      const absenceRatio = parseFloat((absenceDaysLast3Months / EXPECTED_DAYS_3_MONTHS).toFixed(2));
+
+      // إرجاع الموظف مضافاً إليه القيم المحسوبة الحقيقية
+      return {
+        ...emp,
+        absence_days_last_month: absenceDaysLastMonth,
+        absence_days_last_3_months: absenceDaysLast3Months,
+        absence_ratio: absenceRatio,
+        late_arrivals_last_month: lateArrivalsLastMonth,
+        overtime_hours_last_month: Math.round(overtimeHoursLastMonth) // تقريب الساعات الإضافية
+      };
     });
 
     const total = await this.prisma.employees.count({ where });
