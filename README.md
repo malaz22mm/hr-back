@@ -1,205 +1,141 @@
-## JWT Auth ##
+# HR Analytics & Employee Management API
 
-## Roles Guard ##
+A modular REST API for employee operations, workforce analytics, attendance, vacation workflows, and attrition-risk insights. Built with NestJS, TypeScript, Prisma, and PostgreSQL, the API powers the companion [HR Analytics Dashboard](https://github.com/malaz22mm/hr-ai-dashboard).
 
-## Swagger Documentation ##
+## Highlights
 
-## Efficient querying endpoints to enable the front-end traverse and discover and visualize the data as much as possible ##
-A concise set of flexible, minimal endpoints for employee data, designed to cover all front-end querying, filtering, sorting, and aggregation needs with just a few endpoints.
+- Access and refresh token authentication with Passport JWT
+- Email verification and password recovery using one-time codes
+- Role-based access control for employees, administrators, and super administrators
+- Employee CRUD operations with pagination, sorting, categorical filters, and numeric ranges
+- Grouped workforce statistics for dashboards and reports
+- Attendance check-in, check-out, and history workflows
+- Vacation request submission and administrative review
+- Employee-to-user account management
+- Attrition-risk prediction through `GET /employees/:id/predictions/attrition`
+- DTO validation and an OpenAPI contract generated with Swagger
+- Local Node.js runtime and a serverless entry point for Vercel
 
-## 📚 API Documentation
+## Tech stack
 
-The API is fully documented using **Swagger (OpenAPI)**.
+| Area | Technologies |
+|---|---|
+| Framework | NestJS 11, TypeScript |
+| Database | PostgreSQL, Prisma 7, Prisma PostgreSQL adapter |
+| Authentication | Passport, JWT, bcrypt |
+| Validation | class-validator, class-transformer |
+| Documentation | Swagger, OpenAPI |
+| Testing | Jest, Supertest |
+| Deployment | Node.js 20, Vercel serverless functions |
 
-### Interactive UI
-When the server is running, you can access the interactive documentation to test endpoints directly:
-👉 **[http://localhost:3000/api/docs](http://localhost:3000/api/docs)**
+## Main API areas
 
-### Static Specification
-A `swagger-spec.json` file is also available in the root directory for importing into tools like **Postman** or **Insomnia**.
+| Area | Route prefix | Purpose |
+|---|---|---|
+| Authentication | `/auth` | Sign-in, verification, refresh, logout, and password recovery |
+| Employees | `/employees` | Employee records, filters, analytics, and attrition prediction |
+| Users | `/users` | Administrative user-account management |
+| Lookups | `/lookups` | Reference data used by the frontend |
+| Attendance | `/attendance` | Presence and attendance history |
+| Vacations | `/vacations` | Requests and approval workflows |
 
+Protected routes expect an access token:
 
-
-
-# 📊 HR Analytics & Employee Management API
-
-A robust, production-ready REST API built with **NestJS**, **Prisma**, and **PostgreSQL**. This system manages employee attrition data, provides advanced filtering/aggregation for frontend dashboards, and secures operations via Role-Based Access Control (RBAC) and JWT Authentication.
-
-Based on the [IBM HR Analytics Employee Attrition & Performance](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset) dataset from Kaggle.
-
-# Dataset: look inside scripts/ folder, you'll find it there.
-
----
-
-## 🚀 Key Features
-
-### 🔐 Security & Authentication
-
-* **Dual-Token Architecture**: Implements secure **Access Tokens** (short-lived) and **Refresh Tokens** (long-lived) using Passport-JWT.
-* **Email Verification**: Sign-up flows require OTP verification (Verify, Resend Code).
-* **Password Management**: Secure reset password flows via email OTP.
-* **RBAC (Role-Based Access Control)**:
-* **Public**: Authentication endpoints.
-* **Authenticated**: General read access.
-* **Super Admin**: Exclusive rights to create/update/delete employees and manage users.
-
-
-
-### 👥 Employee Management (The Core)
-
-* **Advanced Querying (`GET /employees`)**:
-* **Dynamic Filtering**: Filter by any categorical field (e.g., `Department`, `EducationField`) accepting case-insensitive inputs (e.g., "Human Resources" maps correctly to DB Enums).
-* **Range Filtering**: Filter numeric fields using min/max logic (e.g., `minMonthlyIncome`, `maxAge`, `minYearsAtCompany`).
-* **Sorting**: Sort results by any field in Ascending/Descending order.
-* **Pagination**: Efficient `skip` and `take` pagination.
-
-
-* **Analytics & Aggregation (`GET /employees/stats`)**:
-* Dynamic grouping statistics (e.g., Average Salary by Department, Count by Job Role).
-
-
-
-### 🛠 Technical Highlights
-
-* **Database**: PostgreSQL hosted on **Aiven.io**.
-* **ORM**: Prisma with strictly typed Enums and efficient schema mapping.
-* **Documentation**: Fully integrated **Swagger/OpenAPI** documentation with DTO schemas and example responses.
-* **Validation**: Strict DTO validation using `class-validator` and `class-transformer`.
-
----
-
-## 🛠 Tech Stack
-
-* **Framework**: [NestJS](https://nestjs.com/)
-* **Language**: TypeScript
-* **Database**: PostgreSQL
-* **ORM**: [Prisma](https://www.prisma.io/)
-* **Auth**: Passport, JWT, Bcrypt
-* **Docs**: Swagger (OpenAPI)
-
----
-
-## ⚙️ Installation & Setup
-
-1. **Clone the repository**
-```bash
-git clone https://github.com/your-username/malaz-hr-backend.git
-cd malaz-hr-backend
-
+```http
+Authorization: Bearer <access-token>
 ```
 
+## Getting started
 
-2. **Install dependencies**
+### Prerequisites
+
+- Node.js 20
+- npm
+- PostgreSQL
+
+### Installation
+
 ```bash
+git clone https://github.com/malaz22mm/hr-back.git
+cd hr-back
 npm install
-
+cp .env.example .env
 ```
 
+Generate the Prisma client:
 
-3. **Environment Configuration**
-Create a `.env` file in the root directory and configure your variables:
-```env
-# Database (Aiven PostgreSQL)
-DATABASE_URL="postgresql://user:password@host:port/defaultdb?sslmode=require"
-
-# JWT Secrets
-JWT_ACCESS_SECRET="your_access_secret"
-JWT_REFRESH_SECRET="your_refresh_secret"
-
-# Admin Setup (Optional)
-SUPER_ADMIN_EMAIL="admin@example.com"
-
-```
-
-
-4. **Prisma Generation**
-*Crucial Step:* Generate the Prisma Client to ensure TypeScript types match your schema.
 ```bash
 npx prisma generate
-
 ```
 
+Start the development server:
 
-5. **Run the Server**
 ```bash
-# Development
 npm run start:dev
-
-# Production
-npm run start:prod
-
 ```
 
+The API runs at `http://localhost:3000` by default.
+
+## Environment configuration
+
+Never commit a real `.env` file. Copy `.env.example` and replace its placeholder values locally.
+
+| Variable | Purpose |
+|---|---|
+| `DB_HOST` | PostgreSQL host |
+| `DB_USERNAME` | PostgreSQL user |
+| `DB_PASSWORD` | PostgreSQL password |
+| `DB_DATABASE` | PostgreSQL database name |
+| `DB_PORT` | PostgreSQL port |
+| `AT_SECRET` | Access-token signing secret |
+| `RT_SECRET` | Refresh-token signing secret |
+| `EMAIL_HOST` | SMTP host for verification messages |
+| `EMAIL_PORT` | SMTP port |
+| `EMAIL_USER` | SMTP username and sender |
+| `EMAIL_PASSWORD` | SMTP password or application password |
+| `PORT` | Optional local server port; defaults to `3000` |
+
+## API documentation
+
+With the server running:
+
+- OpenAPI UI: `http://localhost:3000/docs`
+- OpenAPI JSON: `http://localhost:3000/docs-json`
+- Static specification: [`swagger-spec.json`](./swagger-spec.json)
+- Complete endpoint reference: [`COMPLETE_API_REFERENCE.md`](./COMPLETE_API_REFERENCE.md)
+
+## Useful commands
+
+```bash
+npm run start:dev   # Start in watch mode
+npm run build       # Generate Prisma client and compile the app
+npm run lint        # Run ESLint with fixes
+npm test            # Run unit tests
+npm run test:e2e    # Run end-to-end tests
+npm run test:cov    # Generate a coverage report
+```
+
+## Architecture
+
+The codebase follows NestJS feature modules, with shared authentication guards, decorators, validation, and Prisma access. The main domains are separated into authentication, employees, users, lookups, attendance, vacations, and machine-learning integration.
+
+For deployment and deeper technical context, see:
+
+- [`BACKEND_ARCHITECTURE.md`](./BACKEND_ARCHITECTURE.md)
+- [`BACKEND_AUTH_SYSTEM.md`](./BACKEND_AUTH_SYSTEM.md)
+- [`BACKEND_DEPLOYMENT_GUIDE.md`](./BACKEND_DEPLOYMENT_GUIDE.md)
+- [`ML_INTEGRATION_GUIDE.md`](./ML_INTEGRATION_GUIDE.md)
+
+## Dataset notice
+
+The analytics and demonstration data are derived from the public [IBM HR Analytics Employee Attrition & Performance dataset](https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset) and extended with synthetic fields for development and experimentation.
+
+## Status
+
+This project is under active development. Planned engineering improvements include expanded automated testing, rate limiting for authentication routes, consolidated database configuration, and structured production logging.
+
+## Author
+
+Developed by [Malaz Solieman](https://github.com/malaz22mm).
 
 
----
-
-## 📚 API Documentation
-
-Once the server is running, visit the Swagger UI to explore endpoints, schemas, and test requests directly:
-
-**URL:** `http://localhost:3000/api` (default)
-
-### 1. Authentication Module (`/auth`)
-
-Handles the user lifecycle.
-
-* `POST /auth/local/signin`: Login via Email/Phone. Returns Access/Refresh tokens OR a verification requirement object.
-* `POST /auth/refresh`: Rotate access tokens using a valid Refresh Token.
-* `POST /auth/logout`: Invalidate the current session.
-* `POST /auth/verify`: Verify account using OTP.
-* `POST /auth/reset-password`: Reset forgotten passwords.
-
-### 2. Employee Module (`/employees`)
-
-The primary data source for the frontend dashboard.
-
-**🔹 GET /employees (Filtering)**
-This endpoint accepts a massive array of query parameters to slice and dice data.
-
-* **Pagination:** `?skip=0&take=10`
-* **Sorting:** `?sortBy=monthlyIncome&sortOrder=desc`
-* **Categorical (Enums):** `?educationField=Marketing&department=Sales`
-* *Note:* The API handles mapping intelligently (e.g., `Marketing` input maps to `MARKETING` database enum key).
-
-
-* **Numeric Ranges:**
-* `minAge` / `maxAge`
-* `minMonthlyIncome` / `maxMonthlyIncome`
-* `minYearsAtCompany` / `maxYearsAtCompany`
-* ...and many more.
-
-
-
-**🔹 GET /employees/stats (Analytics)**
-
-* **Query:** `?groupBy=department` (or `jobRole`, `gender`, etc.)
-* **Response:** Returns aggregated counts and averages for the requested group.
-
-**🔹 Write Operations (Super Admin Only)**
-
-* `POST /employees`: Create new employee.
-* `PUT /employees`: Update existing employee.
-* `DELETE /employees/:id`: Delete employee.
-
-### 3. Users Module (`/users`)
-
-Restricted to **Super Admin**.
-
-* `GET /users`: List users or search by keyword (Name/Email/Phone/ID).
-* `POST /users`: Register a new admin/user manually.
-* `DELETE /users/:id`: Remove a user.
-
----
-
-## 🗄️ Database Schema Context
-
-This project uses a modified schema based on the "IBM HR Analytics" dataset.
-
-**Key Enums Mapped:**
-To ensure data consistency and clean code, specific mappings are handled between the API and Database:
-
-* `EducationField`: 'Life Sciences', 'Medical', 'Marketing', 'Technical Degree', 'Human Resources', 'Other'.
-* `Department`: 'Sales', 'Research & Development', 'Human Resources'.
-
----
